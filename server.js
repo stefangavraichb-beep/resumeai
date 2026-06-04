@@ -158,8 +158,14 @@ app.post('/targeted', async (req, res) => {
       .map(block => block.text)
       .join('\n');
 
-    res.json({ result: fullText });
+    console.log('Final response stop_reason:', response.stop_reason);
+    console.log('Content blocks:', JSON.stringify(response.content.map(b => ({type: b.type, textLen: b.text?.length}))));
+    console.log('Full text length:', fullText.length);
+    console.log('Full text preview:', fullText.substring(0, 500));
+    
+    res.json({ result: fullText, debug: { stopReason: response.stop_reason, textLength: fullText.length } });
   } catch (error) {
+    console.error('Targeted error:', error);
     res.status(500).json({ error: error.message });
   }
 });
