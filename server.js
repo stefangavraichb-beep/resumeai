@@ -13,6 +13,16 @@ const stripe = Stripe(process.env.STRIPE_SECRET_KEY);
 app.use(cors());
 app.use('/webhook', express.raw({ type: 'application/json' }));
 app.use(express.json({ limit: '10mb' }));
+
+// Routes must be before static middleware
+app.get('/', (req, res) => {
+  res.sendFile(__dirname + '/public/landing.html');
+});
+
+app.get('/app', (req, res) => {
+  res.sendFile(__dirname + '/public/index.html');
+});
+
 app.use(express.static('public'));
 
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
@@ -199,15 +209,6 @@ app.post('/analyze-template', upload.single('template'), async (req, res) => {
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
-});
-
-// Routes
-app.get('/', (req, res) => {
-  res.sendFile(__dirname + '/public/landing.html');
-});
-
-app.get('/app', (req, res) => {
-  res.sendFile(__dirname + '/public/index.html');
 });
 
 const PORT = process.env.PORT || 3000;
