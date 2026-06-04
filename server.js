@@ -206,8 +206,9 @@ app.post('/targeted', async (req, res) => {
   const { resume, target } = req.body;
   if (!resume || !target) return res.status(400).json({ error: 'Missing fields' });
   try {
+    // Use server-side web search via tool, handle full agentic loop
     const messages = [{ role: 'user', content: buildTargetedPrompt(resume, target) }];
-    let fullText = '';
+
     let response = await client.messages.create({
       model: 'claude-sonnet-4-6',
       max_tokens: 8000,
@@ -216,20 +217,30 @@ app.post('/targeted', async (req, res) => {
       messages
     });
 
-    // Handle multi-turn tool use
-    while (response.stop_reason === 'tool_use') {
-      const assistantMessage = { role: 'assistant', content: response.content };
-      messages.push(assistantMessage);
+    // Agentic loop - keep going until end_turn
+    let iterations = 0;
+    while (response.stop_reason === 'tool_use' && iterations < 5) {
+      iterations++;
+      // Add assistant response to messages
+      messages.push({ role: 'assistant', content: response.content });
 
-      const toolResults = response.content
-        .filter(block => block.type === 'tool_use')
-        .map(block => ({
-          type: 'tool_result',
-          tool_use_id: block.id,
-          content: JSON.stringify(block.input)
-        }));
+      // Build tool results for all tool_use blocks
+      const toolResults = [];
+      for (const block of response.content) {
+        if (block.type === 'tool_use') {
+          // The web search tool returns results automatically
+          // We just need to acknowledge with a tool_result
+          toolResults.push({
+            type: 'tool_result',
+            tool_use_id: block.id,
+            content: 'Search completed. Use the results to build the application.'
+          });
+        }
+      }
 
-      messages.push({ role: 'user', content: toolResults });
+      if (toolResults.length > 0) {
+        messages.push({ role: 'user', content: toolResults });
+      }
 
       response = await client.messages.create({
         model: 'claude-sonnet-4-6',
@@ -240,20 +251,36 @@ app.post('/targeted', async (req, res) => {
       });
     }
 
-    // Extract all text blocks from final response
-    fullText = response.content
-      .filter(block => block.type === 'text')
-      .map(block => block.text)
-      .join('\n');
+    // Collect ALL text from the entire conversation
+    let fullText = '';
+    for (const msg of messages) {
+      if (Array.isArray(msg.content)) {
+        for (const block of msg.content) {
+          if (block.type === 'text' && block.text) {
+            fullText += block.text + '\n';
+          }
+        }
+      }
+    }
+    // Also get text from final response
+    if (Array.isArray(response.content)) {
+      for (const block of response.content) {
+        if (block.type === 'text' && block.text) {
+          fullText += block.text + '\n';
+        }
+      }
+    }
 
-    console.log('Final response stop_reason:', response.stop_reason);
-    console.log('Content blocks:', JSON.stringify(response.content.map(b => ({type: b.type, textLen: b.text?.length}))));
-    console.log('Full text length:', fullText.length);
-    console.log('Full text preview:', fullText.substring(0, 500));
-    
-    res.json({ result: fullText, debug: { stopReason: response.stop_reason, textLength: fullText.length } });
+    console.log('Targeted done. Iterations:', iterations, 'Text length:', fullText.length);
+    console.log('Preview:', fullText.substring(0, 300));
+
+    if (!fullText.trim()) {
+      return res.status(500).json({ error: 'No content generated. Please try again.' });
+    }
+
+    res.json({ result: fullText.trim() });
   } catch (error) {
-    console.error('Targeted error:', error);
+    console.error('Targeted error:', error.message);
     res.status(500).json({ error: error.message });
   }
 });
