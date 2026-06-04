@@ -277,6 +277,30 @@
       margin-bottom: 8px; display: block;
     }
 
+    .mode-selector {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 0;
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    .mode-btn {
+      padding: 14px 8px;
+      background: transparent;
+      border: none;
+      border-bottom: 2.5px solid transparent;
+      font-size: 13px; font-weight: 500;
+      color: var(--muted); cursor: pointer;
+      font-family: 'DM Sans', sans-serif;
+      transition: all .15s;
+      display: flex; align-items: center; justify-content: center; gap: 5px;
+      white-space: nowrap;
+      margin-bottom: -1px;
+    }
+    .mode-btn:hover { color: var(--text); background: var(--bg2); }
+    .mode-btn.on { color: var(--blue); border-bottom-color: var(--blue); font-weight: 600; background: var(--blue-bg); }
+    .mode-btn.pro-btn.on { color: var(--blue); }
+
     /* Template picker */
     .tpl-row { display:grid; grid-template-columns:repeat(4,1fr); gap:6px; margin-bottom:18px; }
     .tpl-item {
@@ -519,8 +543,11 @@
 
     /* Targeted panel */
     #targetedPanel {
-      display: none; position: absolute; top: 60px; left: 0; right: 0; bottom: 0;
+      display: none;
+      position: absolute;
+      top: 60px; left: 0; right: 0; bottom: 0;
       overflow-y: auto; background: var(--bg); z-index: 10;
+      /* sits over app-layout content */
     }
     .targeted-inner { max-width: 680px; margin: 0 auto; padding: 32px 24px; }
     .targeted-title {
@@ -708,6 +735,13 @@
 
     <!-- LEFT PANEL -->
     <div class="left-panel">
+      <!-- Mode selector -->
+      <div class="mode-selector">
+        <button class="mode-btn on" id="modeBtn-student" onclick="switchMode('student',this)">🎓 Student</button>
+        <button class="mode-btn" id="modeBtn-pro" onclick="switchMode('pro',this)">💼 Professional</button>
+        <button class="mode-btn pro-btn" id="modeBtn-targeted" onclick="switchMode('targeted',this)">🎯 Targeted <span class="pro-badge" style="font-size:8px;padding:1px 5px;">PRO</span></button>
+      </div>
+
       <div class="left-scroll">
         <div class="field-block">
           <span class="section-label">Template Style</span>
@@ -900,6 +934,37 @@
 
 <script>
 
+
+  function switchMode(mode, btn) {
+    // Update button states
+    document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('on'));
+    btn.classList.add('on');
+    currentMode = mode;
+
+    if (mode === 'targeted') {
+      const isPro = localStorage.getItem('isPro_' + (currentUser?.id || '')) === 'true';
+      if (!isPro) {
+        // Revert button
+        document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('on'));
+        const prevMode = currentMode === 'targeted' ? 'student' : currentMode;
+        document.getElementById('modeBtn-student').classList.add('on');
+        currentMode = 'student';
+        openProfile();
+        showToast('✨ Upgrade to Pro to access Targeted Applications');
+        return;
+      }
+      document.getElementById('targetedPanel').style.display = 'block';
+      document.querySelector('.left-scroll').style.display = 'none';
+      document.querySelector('.left-footer').style.display = 'none';
+      document.querySelector('.right-panel').style.display = 'none';
+    } else {
+      document.getElementById('targetedPanel').style.display = 'none';
+      document.querySelector('.left-scroll').style.display = 'block';
+      document.querySelector('.left-footer').style.display = 'block';
+      document.querySelector('.right-panel').style.display = 'flex';
+    }
+  }
+
   function copyActive() {
     const activeTab = document.querySelector('.tab.on');
     if (!activeTab) return;
@@ -1060,12 +1125,18 @@
     document.getElementById('targetedPanel').style.display = 'none';
   }
 
-  function goHome() {
+
+    function goHome() {
+    document.getElementById('app').classList.remove('active');
+    document.getElementById('landing').classList.add('active');
     document.getElementById('targetedPanel').style.display = 'none';
-    document.querySelector('.panel-left').style.display = 'block';
-    document.querySelector('.panel-right').style.display = 'block';
-    document.querySelector('.app-body').style.gridTemplateColumns = '460px 1fr';
-    showLanding();
+    document.querySelector('.left-scroll').style.display = 'block';
+    document.querySelector('.left-footer').style.display = 'block';
+    document.querySelector('.right-panel').style.display = 'flex';
+    // Reset mode to student
+    document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('on'));
+    document.getElementById('modeBtn-student').classList.add('on');
+    currentMode = 'student';
   }
 
   function selectPath(mode) {
