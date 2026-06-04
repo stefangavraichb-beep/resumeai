@@ -58,42 +58,61 @@ app.use(express.static('public'));
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
 const CV_FORMAT = `
-ALWAYS output CVs in this exact format (matching this template structure):
+CRITICAL FORMATTING RULES — follow exactly, no exceptions:
 
+Output the CV as plain text using this EXACT structure. Every section must appear in this order.
+
+LINE FORMAT FOR ENTRIES:
+Use THREE or more spaces to separate the left text from right date/location on the same line.
+Example: "Goldman Sachs - Summer Analyst   London, June 2024 - August 2024"
+Example: "University of Oxford   Oxford, September 2022 - June 2025"
+
+EXACT TEMPLATE:
+---
 [Full Name]
 [City, Country] • [Phone] • [Email]
 
 EDUCATION
-[University Name]                                                    [City, Month Year - Month Year]
-Course: [Degree name]
-Final qualification: [Full degree title]
 
-[School Name]                                                        [City, Month Year - Month Year]
-[Description of studies]
-Final qualification - [Qualification details]
+[University Name]   [City], [Month Year - Month Year]
+Course: [Degree name]
+Final qualification: [Full qualification title]
+GPA/Grade: [Grade if strong]
+
+[School/College Name]   [City], [Month Year - Month Year]
+[Description, e.g. A-Levels: Mathematics (A*), Economics (A), Further Maths (A)]
 
 WORK EXPERIENCE
-[Company Name - Role Type]                                           [City, Month Year - Month Year]
-- [Achievement bullet point]
-- [Achievement bullet point]
-- [Achievement bullet point]
+
+[Company Name - Role Title]   [City], [Month Year - Month Year]
+- [Strong achievement bullet: action verb + specific task + quantified result]
+- [Strong achievement bullet: action verb + specific task + quantified result]
+- [Strong achievement bullet: action verb + specific task + quantified result]
 
 EXTRACURRICULAR ACTIVITIES
-[Activity Name] - [Role]                                             [City, Month Year - Month Year]
+
+[Society/Club Name - Role]   [City], [Month Year - Month Year]
+- [Bullet point]
 - [Bullet point]
 
 SKILLS AND INTERESTS
-Languages: [Language (Level), Language (Level)]
-Skills: [Skill 1, Skill 2, Skill 3]
-Interests: [Interest 1, Interest 2, Interest 3]
 
-Rules:
-- Use tabs to right-align dates/locations on the same line as institution/company names
-- Company names in bold italic, dates in italic
-- Section headers in BOLD ALL CAPS with a line underneath
-- Bullet points start with a dash (-)
-- Calibri font, A4 page
-- Keep the same clean, professional aesthetic throughout
+Languages: [Language (Level), Language (Level)]
+Skills: [Skill 1, Skill 2, Skill 3, Skill 4]
+Interests: [Interest 1, Interest 2, Interest 3]
+---
+
+FINANCE CV RULES (non-negotiable):
+1. ONE PAGE maximum — cut ruthlessly
+2. Bullets MUST start with strong action verbs (Executed, Analysed, Developed, Led, Built, Generated, Managed)
+3. Quantify everything — £/$amounts, percentages, team sizes, timeframes
+4. NO graphics, NO colours, NO photos, NO emojis
+5. Reverse chronological order within each section
+6. For finance roles: highlight any Excel, financial modelling, Bloomberg, valuation experience
+7. A-Levels and GPA must appear if strong — banks filter on this
+8. Use 3+ spaces (not tabs) to separate entry names from dates
+9. No asterisks or markdown formatting in the output
+10. Interests should be specific and impressive (e.g. "CFA Level 1 candidate" not just "finance")
 `;
 
 const STUDENT_SYSTEM = `You are an expert career coach specializing in student applications — internships, spring weeks, graduate schemes, and entry-level roles at top firms (finance, consulting, tech). You understand that students have limited work experience and need to maximize extracurriculars, academics, societies, and transferable skills. You write in a confident, achievement-focused style appropriate for competitive programs. ${CV_FORMAT}`;
