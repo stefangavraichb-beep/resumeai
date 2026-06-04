@@ -201,5 +201,14 @@ app.post('/analyze-template', upload.single('template'), async (req, res) => {
   }
 });
 
+// Routes
+app.get('/', (req, res) => {
+  res.sendFile(__dirname + '/public/landing.html');
+});
+
+app.get('/app', (req, res) => {
+  res.sendFile(__dirname + '/public/index.html');
+});
+
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`ResumeAI v3 running on port ${PORT}`));
+app.listen(PORT, () => console.log(`ResumeAI running on port ${PORT}`));
