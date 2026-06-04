@@ -599,15 +599,25 @@
           <h4>Missing Keywords</h4>
           <div class="keywords-wrap" id="keywordsWrap"></div>
         </div>
+        <div class="result-block" id="feedbackBlock" style="display:none;">
+          <h4>💡 Improvement Suggestions</h4>
+          <div id="feedbackCards" style="display:flex;flex-direction:column;gap:10px;"></div>
+        </div>
         <div class="result-block">
           <h4>Optimized Resume</h4>
           <div class="result-text" id="optimizedResume"></div>
-          <button class="copy-btn" onclick="copyText('optimizedResume',this)">Copy Resume</button>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;">
+            <button class="copy-btn" onclick="copyText('optimizedResume',this)">Copy</button>
+            <button class="copy-btn" onclick="downloadDoc('cv')" style="background:var(--blue-light);border-color:var(--blue-mid);color:var(--blue);">⬇ Download .docx</button>
+          </div>
         </div>
         <div class="result-block">
           <h4>Cover Letter</h4>
           <div class="result-text" id="coverLetter"></div>
-          <button class="copy-btn" onclick="copyText('coverLetter',this)">Copy Cover Letter</button>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;">
+            <button class="copy-btn" onclick="copyText('coverLetter',this)">Copy</button>
+            <button class="copy-btn" onclick="downloadDoc('cover')" style="background:var(--blue-light);border-color:var(--blue-mid);color:var(--blue);">⬇ Download .docx</button>
+          </div>
         </div>
         <div class="result-block">
           <h4>Interview Tips</h4>
@@ -961,6 +971,16 @@
     const tipsArr = tips.split('\n').filter(t=>t.trim());
     document.getElementById('tipsList').innerHTML = tipsArr.map(t=>`<li>${t.replace(/^[-•*\d.]\s*/,'')}</li>`).join('');
 
+    // Parse feedback cards
+    const feedbackRaw = get('FEEDBACK CARDS', null);
+    if (feedbackRaw) {
+      try {
+        const cleanJson = feedbackRaw.replace(/```json|```/g, '').trim();
+        feedbackData = JSON.parse(cleanJson);
+        renderFeedbackCards(feedbackData);
+      } catch(e) { console.log('Feedback parse error:', e); }
+    }
+
     document.getElementById('resultsContent').style.display = 'block';
     document.getElementById('resultsContent').scrollIntoView({behavior:'smooth'});
   }
@@ -1088,6 +1108,94 @@
 
     document.getElementById('targetResults').style.display = 'block';
     document.getElementById('targetResults').scrollIntoView({ behavior: 'smooth' });
+  }
+
+
+  async function downloadDoc(type) {
+    const text = type === 'cv'
+      ? document.getElementById('optimizedResume').textContent
+      : document.getElementById('coverLetter').textContent;
+    if (!text) return;
+
+    const endpoint = type === 'cv' ? '/download-cv' : '/download-cover';
+    const body = type === 'cv' ? { resumeText: text } : { coverText: text };
+
+    try {
+      const res = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = type === 'cv' ? 'optimized-cv.docx' : 'cover-letter.docx';
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch(err) {
+      alert('Download failed: ' + err.message);
+    }
+  }
+
+  function renderFeedbackCards(cards) {
+    if (!cards || !cards.length) return;
+    const container = document.getElementById('feedbackCards');
+    const categoryIcons = { hobbies:'🎯', experience:'💼', skills:'⚡', education:'🎓', formatting:'📄', keywords:'🔑' };
+    
+    container.innerHTML = cards.map((card, i) => `
+      <div style="background:var(--bg2);border:2px solid var(--border);border-radius:12px;padding:16px;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+          <span style="font-size:1.1rem;">${categoryIcons[card.category] || '💡'}</span>
+          <span style="font-size:0.75rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);">${card.category}</span>
+        </div>
+        <p style="font-size:0.85rem;color:var(--text);font-weight:600;margin-bottom:10px;">${card.issue}</p>
+        <div style="display:flex;flex-direction:column;gap:6px;">
+          ${card.options.map((opt, j) => `
+            <button onclick="applyFeedback(${i}, ${j})" 
+              style="text-align:left;padding:8px 12px;background:var(--surface);border:2px solid var(--border);border-radius:8px;cursor:pointer;font-size:0.8rem;font-family:'Plus Jakarta Sans',sans-serif;color:var(--text);transition:all 0.2s;"
+              onmouseover="this.style.borderColor='var(--blue)';this.style.color='var(--blue)'"
+              onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text)'">
+              ${opt}
+            </button>
+          `).join('')}
+        </div>
+      </div>
+    `).join('');
+    
+    document.getElementById('feedbackBlock').style.display = 'block';
+  }
+
+  let feedbackData = [];
+  function applyFeedback(cardIdx, optionIdx) {
+    const card = feedbackData[cardIdx];
+    const chosen = card.options[optionIdx];
+    const resumeEl = document.getElementById('optimizedResume');
+    let text = resumeEl.textContent;
+    
+    // Add to hobbies/interests section or append
+    if (card.category === 'hobbies') {
+      if (text.includes('HOBBIES') || text.includes('INTERESTS')) {
+        text = text.replace(/(HOBBIES|INTERESTS)[\s\S]*?(\n\n|$)/, (match) => match + '- ' + chosen + '\n');
+      } else {
+        text += '\n\nHOBBIES & INTERESTS\n- ' + chosen;
+      }
+    } else if (card.category === 'skills') {
+      if (text.includes('SKILLS')) {
+        text = text.replace(/(SKILLS[^\n]*\n)/, '$1- ' + chosen + '\n');
+      } else {
+        text += '\n\nSKILLS\n- ' + chosen;
+      }
+    } else {
+      text += '\n\n[Applied suggestion: ' + chosen + ']';
+    }
+    
+    resumeEl.textContent = text;
+    showToast('✓ Suggestion applied! Download your updated CV.');
+    
+    // Mark as applied
+    const btn = document.querySelectorAll('#feedbackCards button')[cardIdx * 3 + optionIdx];
+    if (btn) { btn.style.background = 'var(--blue-light)'; btn.style.borderColor = 'var(--blue)'; btn.style.color = 'var(--blue)'; }
   }
 
   async function signOut() {
