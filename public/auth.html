@@ -285,7 +285,7 @@
   async function signInGoogle() {
     const { error } = await sb.auth.signInWithOAuth({
       provider: 'google',
-      options: { redirectTo: window.location.origin + '/' }
+      options: { redirectTo: window.location.origin + '/app' }
     });
     if (error) showMessage(error.message, 'error');
   }
