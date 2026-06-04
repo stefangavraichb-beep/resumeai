@@ -805,11 +805,29 @@
     // Handle post-upgrade redirect
     const params = new URLSearchParams(window.location.search);
     if (params.get('upgrade') === 'success') {
-      localStorage.setItem('isPro_' + currentUser.id, 'true');
-      history.replaceState({}, '', '/');
+      // Re-verify with Stripe immediately after payment
+      try {
+        const subRes = await fetch('/check-subscription', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userEmail: currentUser.email })
+        });
+        const subData = await subRes.json();
+        if (subData.isPro) {
+          localStorage.setItem('isPro_' + currentUser.id, 'true');
+        }
+      } catch(e) {
+        // Fallback: trust the redirect
+        localStorage.setItem('isPro_' + currentUser.id, 'true');
+      }
+      history.replaceState({}, '', '/app');
       setTimeout(() => {
         showToast('🎉 Welcome to Pro! Targeted Applications unlocked.');
+        updateUsageDisplay();
       }, 500);
+    }
+    if (params.get('upgrade') === 'cancelled') {
+      history.replaceState({}, '', '/app');
     }
 
     updateUsageDisplay();
