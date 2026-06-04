@@ -1,203 +1,270 @@
-const { Document, Packer, Paragraph, TextRun, AlignmentType, BorderStyle, LevelFormat, TabStopType, WidthType } = require('docx');
+// Finance-grade CV generator
+// Based on research from Mergers & Inquisitions, CFI, Financial Edge, CV Anywhere
+// Standards: Times New Roman, 10.5-11pt body, 14pt name, 1 page A4, 1" margins
+// Section order: Name > Contact > Education > Work Experience > Extracurriculars > Skills & Interests
 
-// Exact replica of Karina's CV format based on parsed XML:
-// - Font: Times New Roman throughout
-// - Name: sz=40 (20pt), bold, centered
-// - Contact: sz=18 (9pt), centered
-// - Section headers: sz=28 (14pt), bold, with horizontal rule via paragraph border
-// - Institution/Company: sz=23 (11.5pt), bold (italic for companies)
-// - Body text: sz=20-21 (10-10.5pt)
-// - Bullets: indented left=720, hanging=360
-// - Margins: top=990, bottom=270, left=1440, right=900 (twips)
+const { Document, Packer, Paragraph, TextRun, AlignmentType, BorderStyle, TabStopType, TabStopPosition, LevelFormat } = require('docx');
 
 const FONT = 'Times New Roman';
-const MARGIN = { top: 990, bottom: 270, left: 1440, right: 900 };
+// DXA units: 1 inch = 1440 DXA, 1pt = 20 DXA
+// Page: A4 = 11906 x 16838 DXA
+// Margins: 1 inch all sides = 1440 DXA each
+// Content width: 11906 - 2880 = 9026 DXA
 
-function mkRun(text, opts = {}) {
+const PAGE_W = 11906;
+const PAGE_H = 16838;
+const MARGIN = 1440; // 1 inch
+const CONTENT_W = PAGE_W - MARGIN * 2; // 9026 DXA
+
+// Font sizes in half-points (docx unit)
+const SZ_NAME = 28;     // 14pt - name
+const SZ_CONTACT = 20;  // 10pt - contact line
+const SZ_SECTION = 24;  // 12pt - section headers
+const SZ_ENTRY = 22;    // 11pt - company/institution names
+const SZ_BODY = 21;     // 10.5pt - body text, bullets
+const SZ_SMALL = 20;    // 10pt - fine print
+
+// Line spacing: single = 240, 1.15 = 276
+const LS = 240;
+
+function r(text, opts = {}) {
   return new TextRun({
     text,
     font: FONT,
-    size: opts.size || 20,
+    size: opts.sz || SZ_BODY,
     bold: opts.bold || false,
-    italics: opts.italics || false,
+    italics: opts.italic || false,
   });
 }
 
-function nameP(text) {
+function emptyP() {
+  return new Paragraph({
+    spacing: { line: LS, lineRule: 'auto', before: 0, after: 0 },
+    children: [r('', { sz: SZ_BODY })]
+  });
+}
+
+// Name - centered, bold, 14pt
+function nameP(name) {
   return new Paragraph({
     alignment: AlignmentType.CENTER,
-    spacing: { line: 240, lineRule: 'auto', after: 0 },
-    children: [mkRun(text, { bold: true, size: 40 })]
+    spacing: { line: LS, lineRule: 'auto', before: 0, after: 40 },
+    children: [r(name, { bold: true, sz: SZ_NAME })]
   });
 }
 
+// Contact - centered, 10pt
 function contactP(text) {
   return new Paragraph({
     alignment: AlignmentType.CENTER,
-    spacing: { line: 240, lineRule: 'auto', after: 0 },
-    children: [mkRun(text, { size: 18 })]
+    spacing: { line: LS, lineRule: 'auto', before: 0, after: 80 },
+    children: [r(text, { sz: SZ_CONTACT })]
   });
 }
 
-function sectionHeader(text) {
+// Section header - bold 12pt, solid bottom border, small space above
+function sectionP(text) {
   return new Paragraph({
-    spacing: { line: 240, lineRule: 'auto', before: 120, after: 0 },
+    spacing: { line: LS, lineRule: 'auto', before: 160, after: 60 },
     border: { bottom: { style: BorderStyle.SINGLE, size: 6, color: '000000', space: 1 } },
-    children: [mkRun(text, { bold: true, size: 28 })]
+    children: [r(text, { bold: true, sz: SZ_SECTION })]
   });
 }
 
-function institutionLine(name, location, date, isItalic = false) {
-  // Bold name on left, italic location+date on right (spaces used to push right like original)
-  const children = [
-    mkRun(name, { bold: true, size: 23, italics: isItalic }),
-    mkRun('   ', { size: 21 }),
-    mkRun(location + ', ' + date, { italics: true, size: 21 }),
-  ];
+// Entry header: bold company/school name left, italic location+date right
+// Uses tab stop at right edge of content area
+function entryHeaderP(leftText, rightText, italic = false) {
   return new Paragraph({
-    spacing: { line: 240, lineRule: 'auto', before: 0, after: 0 },
-    children
-  });
-}
-
-function bodyLine(text, size = 21) {
-  return new Paragraph({
-    spacing: { line: 240, lineRule: 'auto', after: 0 },
-    children: [mkRun(text, { size })]
-  });
-}
-
-function bulletLine(text) {
-  return new Paragraph({
-    spacing: { line: 240, lineRule: 'auto', after: 0 },
-    indent: { left: 720, hanging: 360 },
+    tabStops: [{ type: TabStopType.RIGHT, position: CONTENT_W }],
+    spacing: { line: LS, lineRule: 'auto', before: 80, after: 20 },
     children: [
-      mkRun('- ', { size: 20 }),
-      mkRun(text, { size: 20 })
+      r(leftText, { bold: true, sz: SZ_ENTRY, italic }),
+      r('\t', { sz: SZ_ENTRY }),
+      r(rightText, { italic: true, sz: SZ_SMALL }),
     ]
   });
 }
 
-function boldLabelLine(label, value) {
+// Sub-line under entry header (degree, role description) - normal body text
+function subLineP(text) {
   return new Paragraph({
-    spacing: { line: 240, lineRule: 'auto', after: 0 },
+    spacing: { line: LS, lineRule: 'auto', before: 0, after: 0 },
+    children: [r(text, { sz: SZ_BODY })]
+  });
+}
+
+// Bullet point - left indent 360 DXA, hanging 360 DXA
+function bulletP(text) {
+  return new Paragraph({
+    spacing: { line: LS, lineRule: 'auto', before: 0, after: 0 },
+    indent: { left: 360, hanging: 360 },
     children: [
-      mkRun(label + ': ', { bold: true, size: 20 }),
-      mkRun(value, { size: 20 })
+      r('- ', { sz: SZ_BODY }),
+      r(text, { sz: SZ_BODY })
     ]
   });
 }
 
-function emptyLine() {
+// Skills line: bold label, normal value
+function skillsP(label, value) {
   return new Paragraph({
-    spacing: { line: 240, lineRule: 'auto', after: 0 },
-    children: [mkRun('', { size: 20 })]
+    spacing: { line: LS, lineRule: 'auto', before: 0, after: 0 },
+    children: [
+      r(label + ': ', { bold: true, sz: SZ_BODY }),
+      r(value, { sz: SZ_BODY })
+    ]
   });
 }
 
+// Body paragraph - normal text
+function bodyP(text) {
+  return new Paragraph({
+    spacing: { line: LS, lineRule: 'auto', before: 0, after: 0 },
+    children: [r(text, { sz: SZ_BODY })]
+  });
+}
+
+// Parse plain text CV into structured docx
 function parseAndBuild(resumeText) {
-  const lines = resumeText.split('\n');
+  const rawLines = resumeText.split('\n');
   const children = [];
 
-  let state = 'start';
   let nameAdded = false;
   let contactAdded = false;
 
-  for (let i = 0; i < lines.length; i++) {
-    const line = lines[i];
-    const trimmed = line.trim();
+  const SECTION_KEYWORDS = [
+    'EDUCATION', 'WORK EXPERIENCE', 'EXPERIENCE', 'EXTRACURRICULAR',
+    'ACTIVITIES', 'SKILLS AND INTERESTS', 'SKILLS & INTERESTS',
+    'SKILLS', 'INTERESTS', 'LANGUAGES', 'ACHIEVEMENTS',
+    'CERTIFICATIONS', 'PROJECTS', 'VOLUNTEERING', 'LEADERSHIP'
+  ];
 
+  const DATE_PATTERN = /\b(January|February|March|April|May|June|July|August|September|October|November|December|20\d{2}|19\d{2}|Present|Current)\b/i;
+  const SKILLS_PATTERN = /^(Languages|Skills|Interests|Certifications|Hobbies|Technical Skills|Soft Skills)\s*:/i;
+
+  for (let i = 0; i < rawLines.length; i++) {
+    const raw = rawLines[i];
+    const trimmed = raw.trim();
+
+    // Skip empty lines but add spacing
     if (!trimmed) {
-      if (nameAdded) children.push(emptyLine());
+      if (nameAdded) children.push(emptyP());
       continue;
     }
 
-    // Name (first non-empty line)
+    // Strip markdown asterisks used for bold/italic
+    const clean = trimmed.replace(/\*+/g, '').trim();
+
+    // 1. Name - first non-empty line
     if (!nameAdded) {
-      children.push(nameP(trimmed));
+      children.push(nameP(clean));
       nameAdded = true;
       continue;
     }
 
-    // Contact line (has @ or • or + or city info)
-    if (!contactAdded && (trimmed.includes('@') || trimmed.includes('•') || trimmed.includes('+') || trimmed.match(/^\w+,\s+\w+/))) {
-      children.push(contactP(trimmed));
+    // 2. Contact line - has email/phone/location indicators
+    if (!contactAdded && (
+      clean.includes('@') ||
+      clean.includes('+') ||
+      clean.match(/^\w[\w\s]+,\s+\w/) ||
+      clean.includes('•') ||
+      clean.includes('|')
+    )) {
+      children.push(contactP(clean));
       contactAdded = true;
       continue;
     }
 
-    // Section headers - ALL CAPS words or known section keywords
-    const upperTrimmed = trimmed.toUpperCase();
-    const sectionKeywords = ['EDUCATION', 'WORK EXPERIENCE', 'EXTRACURRICULAR', 'SKILLS AND INTERESTS', 'SKILLS', 'INTERESTS', 'LANGUAGES', 'ACTIVITIES', 'VOLUNTEERING', 'ACHIEVEMENTS', 'CERTIFICATIONS', 'PROJECTS'];
-    const isSection = sectionKeywords.some(k => upperTrimmed.startsWith(k)) ||
-      (trimmed === upperTrimmed && trimmed.length > 4 && !trimmed.startsWith('-') && trimmed.split(' ').length <= 5);
+    // 3. Section headers - ALL CAPS or known keywords
+    const upperClean = clean.toUpperCase();
+    const isSection = SECTION_KEYWORDS.some(k => upperClean === k || upperClean.startsWith(k + ' ')) ||
+      (clean === clean.toUpperCase() && clean.length > 3 && !clean.startsWith('-') && clean.replace(/[^A-Z\s]/g, '').length > 3);
 
     if (isSection) {
-      children.push(emptyLine());
-      children.push(sectionHeader(trimmed));
-      children.push(emptyLine());
+      children.push(sectionP(clean));
       continue;
     }
 
-    // Bullet lines
+    // 4. Bullet points
     if (trimmed.startsWith('-') || trimmed.startsWith('•')) {
-      const text = trimmed.replace(/^[-•]\s*/, '');
-      children.push(bulletLine(text));
+      const text = clean.replace(/^[-•]\s*/, '');
+      children.push(bulletP(text));
       continue;
     }
 
-    // Skills/Languages/Interests lines with bold label
-    const labelMatch = trimmed.match(/^(Languages|Skills|Interests|Certifications|Awards):\s*(.*)/i);
-    if (labelMatch) {
-      children.push(boldLabelLine(labelMatch[1], labelMatch[2]));
+    // 5. Skills/Languages/Interests lines
+    const skillsMatch = clean.match(SKILLS_PATTERN);
+    if (skillsMatch) {
+      const colonIdx = clean.indexOf(':');
+      const label = clean.substring(0, colonIdx).trim();
+      const value = clean.substring(colonIdx + 1).trim();
+      children.push(skillsP(label, value));
       continue;
     }
 
-    // Institution/company lines — detect if they have a date pattern
-    const datePattern = /\b(January|February|March|April|May|June|July|August|September|October|November|December|20\d\d|19\d\d)\b/;
-    const hasDates = datePattern.test(trimmed);
-
-    if (hasDates && trimmed.length < 150) {
-      // Try to split name from date
-      const parts = trimmed.split(/\s{3,}|\t+/);
-      if (parts.length >= 2) {
-        const name = parts[0].trim().replace(/\*/g, '');
-        const rest = parts.slice(1).join(' ').trim().replace(/\*/g, '');
-        const isCompany = name.includes('Internship') || name.includes('Company') || name.includes('-') || /^[A-Z]/.test(name);
-        children.push(institutionLine(name, '', rest, isCompany));
+    // 6. Entry header lines - have a date AND are not too long
+    // These are lines like "Goldman Sachs - Analyst    London, June 2024 - Present"
+    if (DATE_PATTERN.test(clean) && clean.length < 200) {
+      // Try to split at multiple spaces or tab
+      const splitMatch = clean.match(/^(.+?)\s{2,}(.+)$/) || clean.match(/^(.+?)\t(.+)$/);
+      if (splitMatch) {
+        const left = splitMatch[1].trim();
+        const right = splitMatch[2].trim();
+        // Is this italic (company) or bold (institution)?
+        const isCompany = left.includes('-') || /internship|analyst|associate|manager|director|founder|engineer|consultant|developer/i.test(left);
+        children.push(entryHeaderP(left, right, isCompany));
       } else {
-        // Single part with dates embedded — bold italic line
+        // Whole line is an entry header - treat as bold italic
         children.push(new Paragraph({
-          spacing: { line: 240, lineRule: 'auto', after: 0 },
-          children: [mkRun(trimmed.replace(/\*/g, ''), { bold: true, italics: true, size: 23 })]
+          spacing: { line: LS, lineRule: 'auto', before: 80, after: 20 },
+          children: [r(clean, { bold: true, italic: true, sz: SZ_ENTRY })]
         }));
       }
       continue;
     }
 
-    // Short non-bullet lines that look like headings (institution names, degree names)
-    if (trimmed.length < 80 && !trimmed.includes(':')) {
-      const nextLine = lines[i + 1]?.trim() || '';
-      const isBoldCandidate = nextLine.startsWith('-') || nextLine.toLowerCase().startsWith('course') || nextLine.toLowerCase().startsWith('final') || nextLine.toLowerCase().startsWith('high school') || nextLine === '';
-      if (isBoldCandidate || trimmed.length < 50) {
-        children.push(new Paragraph({
-          spacing: { line: 240, lineRule: 'auto', after: 0 },
-          children: [mkRun(trimmed.replace(/\*/g, ''), { bold: true, size: 23 })]
-        }));
-        continue;
-      }
+    // 7. Sub-lines under entry headers (degree names, course descriptions, etc.)
+    // Short lines that come right after an entry header
+    const prevLine = rawLines[i - 1]?.trim() || '';
+    const nextLine = rawLines[i + 1]?.trim() || '';
+    const looksLikeSubLine = clean.toLowerCase().startsWith('course') ||
+      clean.toLowerCase().startsWith('final') ||
+      clean.toLowerCase().startsWith('bsc') ||
+      clean.toLowerCase().startsWith('ba ') ||
+      clean.toLowerCase().startsWith('msc') ||
+      clean.toLowerCase().startsWith('degree') ||
+      clean.toLowerCase().startsWith('a-levels') ||
+      clean.toLowerCase().startsWith('gpa') ||
+      clean.toLowerCase().startsWith('sat') ||
+      clean.toLowerCase().startsWith('high school');
+
+    if (looksLikeSubLine) {
+      children.push(subLineP(clean));
+      continue;
     }
 
-    // Default body line
-    children.push(bodyLine(trimmed.replace(/\*/g, '')));
+    // 8. Short lines that look like entry headers without dates
+    // (institution names, company names that span one line)
+    if (clean.length < 80 && !clean.includes(':') && (
+      nextLine.startsWith('-') ||
+      nextLine.toLowerCase().startsWith('course') ||
+      nextLine.toLowerCase().startsWith('final') ||
+      DATE_PATTERN.test(nextLine)
+    )) {
+      children.push(entryHeaderP(clean, '', false));
+      continue;
+    }
+
+    // 9. Default - regular body text
+    children.push(bodyP(clean));
   }
 
   const doc = new Document({
     sections: [{
       properties: {
         page: {
-          size: { width: 12240, height: 15840 }, // US Letter
-          margin: MARGIN
+          size: { width: PAGE_W, height: PAGE_H },
+          margin: { top: MARGIN, bottom: MARGIN, left: MARGIN, right: MARGIN }
         }
       },
       children
@@ -207,19 +274,20 @@ function parseAndBuild(resumeText) {
   return Packer.toBuffer(doc);
 }
 
+// Cover letter generator - clean, consistent font throughout
 function buildCoverLetterDoc(coverText) {
   const lines = coverText.split('\n');
   const children = [];
 
   for (const line of lines) {
-    const trimmed = line.trim();
+    const trimmed = line.trim().replace(/\*+/g, '');
     if (!trimmed) {
-      children.push(emptyLine());
+      children.push(emptyP());
       continue;
     }
     children.push(new Paragraph({
-      spacing: { line: 240, lineRule: 'auto', after: 80 },
-      children: [mkRun(trimmed, { size: 21 })]
+      spacing: { line: 276, lineRule: 'auto', before: 0, after: 80 }, // 1.15 spacing
+      children: [r(trimmed, { sz: SZ_BODY })]
     }));
   }
 
@@ -227,8 +295,8 @@ function buildCoverLetterDoc(coverText) {
     sections: [{
       properties: {
         page: {
-          size: { width: 12240, height: 15840 },
-          margin: { top: 1440, bottom: 1440, left: 1440, right: 1440 }
+          size: { width: PAGE_W, height: PAGE_H },
+          margin: { top: MARGIN, bottom: MARGIN, left: MARGIN, right: MARGIN }
         }
       },
       children
