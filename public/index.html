@@ -86,10 +86,11 @@
     }
     .nav-brand {
       font-family: 'Instrument Serif', serif;
-      font-size: 17px;
+      font-size: 22px;
       color: var(--text);
       cursor: pointer;
-      letter-spacing: -0.01em;
+      letter-spacing: -0.02em;
+      font-weight: 400;
     }
     .nav-right { display:flex; align-items:center; gap:8px; }
 
@@ -129,7 +130,7 @@
     /* ─── LANDING ─── */
     #landing {
       align-items: center; justify-content: center;
-      padding: 60px 24px; text-align: center;
+      padding: 0 24px; text-align: center;
       background: var(--bg);
       position: relative; overflow: hidden;
       min-height: 100vh;
@@ -168,9 +169,9 @@
 
     .hero-title {
       font-family: 'Instrument Serif', serif;
-      font-size: clamp(2.6rem, 6vw, 4.2rem);
+      font-size: clamp(3rem, 7vw, 5rem);
       font-weight: 400;
-      line-height: 1.05;
+      line-height: 1.0;
       letter-spacing: -.03em;
       color: var(--text);
       margin-bottom: 16px;
@@ -181,13 +182,13 @@
     .hero-sub {
       font-size: 15px; font-weight: 300; color: var(--muted);
       line-height: 1.65; max-width: 400px; margin: 0 auto 44px;
-      animation: rise .5s .12s ease both;
+      animation: rise .4s .08s ease both;
     }
 
     .path-grid {
       display: grid; grid-template-columns: 1fr 1fr;
       gap: 10px; max-width: 520px; margin: 0 auto;
-      animation: rise .5s .18s ease both;
+      animation: rise .4s .12s ease both;
     }
 
     .path-card {
@@ -659,7 +660,6 @@
 <!-- ══════ LANDING ══════ -->
 <div id="landing" class="screen">
   <div class="landing-inner">
-    <div class="hero-chip"><div class="hero-chip-dot"></div> AI-Powered · Free to start</div>
     <h1 class="hero-title">Your resume,<br/><em>perfected.</em></h1>
     <p class="hero-sub">Paste your CV, pick your path. Get an ATS score, optimised resume, cover letter and interview tips — instantly.</p>
 
