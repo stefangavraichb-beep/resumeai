@@ -314,6 +314,25 @@
     }
     .empty-icon { font-size:2.5rem; margin-bottom:8px; opacity:0.4; }
 
+    /* History */
+    .history-bar {
+      background:var(--bg2); border-bottom:1px solid var(--border);
+      padding:10px 28px; display:none; align-items:center; gap:10px;
+      flex-wrap:wrap;
+    }
+    .history-bar.visible { display:flex; }
+    .history-label { font-size:0.68rem; font-weight:700; text-transform:uppercase; letter-spacing:0.1em; color:var(--muted); flex-shrink:0; }
+    .history-chip {
+      padding:4px 12px; border-radius:999px;
+      background:var(--surface); border:1.5px solid var(--border);
+      font-size:0.75rem; color:var(--muted); cursor:pointer;
+      transition:all 0.2s; white-space:nowrap; max-width:200px;
+      overflow:hidden; text-overflow:ellipsis;
+      font-family:'Plus Jakarta Sans',sans-serif;
+    }
+    .history-chip:hover { border-color:var(--blue); color:var(--blue); background:var(--blue-light); }
+    .history-chip.active { border-color:var(--blue); color:var(--blue); background:var(--blue-light); }
+
     .loading-state {
       display:none; flex-direction:column; align-items:center;
       justify-content:center; height:100%; gap:14px;
@@ -572,6 +591,11 @@
     </div>
 
     <div class="panel-right">
+      <div class="history-bar" id="historyBar">
+        <span class="history-label">History</span>
+        <div id="historyChips" style="display:flex;gap:8px;flex-wrap:wrap;"></div>
+      </div>
+      <div id="historyResultsWrap">
       <div class="empty-state" id="emptyState">
         <div class="empty-icon">✨</div>
         <p style="font-size:0.95rem;font-weight:600;color:var(--text)">Ready when you are</p>
@@ -831,6 +855,7 @@
     }
 
     updateUsageDisplay();
+    renderHistory();
     showLanding();
   }
 
@@ -954,6 +979,8 @@
       usageCount++;
       localStorage.setItem('usage_' + currentUser.id, usageCount);
       updateUsageDisplay();
+      const jobDescVal = document.getElementById('jobDesc').value.trim();
+      saveToHistory(jobDescVal, data.result);
       parseAndDisplay(data.result);
     } catch(err) {
       errorBox.textContent = 'Something went wrong: ' + err.message;
@@ -992,7 +1019,6 @@
     setTimeout(() => { fill.style.strokeDashoffset = circumference - (score / 100) * circumference; }, 100);
 
     document.getElementById('keywordsWrap').innerHTML = keywords.split(',').map(k=>k.trim()).filter(Boolean).map(k=>`<span class="kw">${k}</span>`).join('');
-    document.getElementById('optimizedResume').textContent = optimized;
     renderCVPreview(optimized);
     document.getElementById('coverLetter').textContent = cover;
 
@@ -1009,13 +1035,18 @@
       } catch(e) { console.log('Feedback parse error:', e); }
     }
 
-    // Reset to CV tab
-    document.querySelectorAll('.tab-pane').forEach(p => p.style.display = 'none');
-    document.querySelectorAll('.result-tab').forEach(b => b.classList.remove('active'));
-    document.getElementById('tab-cv').style.display = 'block';
-    document.querySelector('.result-tab').classList.add('active');
-
     document.getElementById('resultsContent').style.display = 'block';
+
+    // Reset to CV tab safely
+    const tabPanes = document.querySelectorAll('.tab-pane');
+    const tabBtns = document.querySelectorAll('.result-tab');
+    if (tabPanes.length) tabPanes.forEach(p => p.style.display = 'none');
+    if (tabBtns.length) tabBtns.forEach(b => b.classList.remove('active'));
+    const cvTab = document.getElementById('tab-cv');
+    const firstBtn = document.querySelector('.result-tab');
+    if (cvTab) cvTab.style.display = 'block';
+    if (firstBtn) firstBtn.classList.add('active');
+
     document.getElementById('resultsContent').scrollIntoView({behavior:'smooth'});
   }
 
@@ -1232,6 +1263,40 @@
     if (btn) { btn.style.background = 'var(--blue-light)'; btn.style.borderColor = 'var(--blue)'; btn.style.color = 'var(--blue)'; }
   }
 
+
+
+  // History storage
+  let optimizationHistory = JSON.parse(localStorage.getItem('opt_history') || '[]');
+
+  function saveToHistory(jobDesc, result) {
+    const entry = {
+      id: Date.now(),
+      jobDesc: jobDesc.substring(0, 60),
+      result,
+      timestamp: new Date().toLocaleDateString()
+    };
+    optimizationHistory.unshift(entry);
+    if (optimizationHistory.length > 5) optimizationHistory = optimizationHistory.slice(0, 5);
+    localStorage.setItem('opt_history', JSON.stringify(optimizationHistory));
+    renderHistory();
+  }
+
+  function renderHistory() {
+    if (!optimizationHistory.length) return;
+    const bar = document.getElementById('historyBar');
+    const chips = document.getElementById('historyChips');
+    bar.classList.add('visible');
+    chips.innerHTML = optimizationHistory.map((e, i) =>
+      `<button class="history-chip ${i===0?'active':''}" onclick="loadHistory(${i})" title="${e.jobDesc}">${e.jobDesc}</button>`
+    ).join('');
+  }
+
+  function loadHistory(idx) {
+    const entry = optimizationHistory[idx];
+    if (!entry) return;
+    document.querySelectorAll('.history-chip').forEach((c,i) => c.classList.toggle('active', i===idx));
+    parseAndDisplay(entry.result);
+  }
 
   function renderCVPreview(text) {
     const el = document.getElementById('optimizedResume');
