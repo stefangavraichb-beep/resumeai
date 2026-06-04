@@ -782,7 +782,7 @@
 
     usageCount = parseInt(localStorage.getItem('usage_' + currentUser.id) || '0');
 
-    // Check subscription status from server
+    // Check subscription status from server on every load
     try {
       const res = await fetch('/check-subscription', {
         method: 'POST',
@@ -792,8 +792,15 @@
       const data = await res.json();
       if (data.isPro) {
         localStorage.setItem('isPro_' + currentUser.id, 'true');
+      } else {
+        // Only clear if explicitly not pro (don't clear on network error)
+        if (data.hasOwnProperty('isPro')) {
+          localStorage.removeItem('isPro_' + currentUser.id);
+        }
       }
-    } catch(e) {}
+    } catch(e) {
+      console.log('Could not verify subscription, using cached status');
+    }
 
     // Handle post-upgrade redirect
     const params = new URLSearchParams(window.location.search);
@@ -849,6 +856,7 @@
       const isPro = localStorage.getItem('isPro_' + (currentUser?.id || '')) === 'true';
       if (!isPro) {
         openProfile();
+        showToast('✨ Upgrade to Pro to access Targeted Applications');
         return;
       }
       document.getElementById('landing').classList.remove('active');
@@ -899,7 +907,8 @@
   }
 
   async function optimize() {
-    if (usageCount >= FREE_LIMIT) {
+    const isPro = localStorage.getItem('isPro_' + (currentUser?.id || '')) === 'true';
+    if (!isPro && usageCount >= FREE_LIMIT) {
       openProfile();
       return;
     }
