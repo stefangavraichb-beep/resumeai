@@ -5,6 +5,7 @@ const multer = require('multer');
 const fs = require('fs');
 const Stripe = require('stripe');
 require('dotenv').config();
+const { parseResumeToDocx, parseCoverLetterToDocx } = require('./generate_docx');
 
 const app = express();
 const upload = multer({ dest: 'uploads/' });
@@ -13,6 +14,35 @@ const stripe = Stripe(process.env.STRIPE_SECRET_KEY);
 app.use(cors());
 app.use('/webhook', express.raw({ type: 'application/json' }));
 app.use(express.json({ limit: '10mb' }));
+
+
+// Download optimized CV as docx
+app.post('/download-cv', async (req, res) => {
+  const { resumeText } = req.body;
+  if (!resumeText) return res.status(400).json({ error: 'Missing resume text' });
+  try {
+    const buffer = await parseResumeToDocx(resumeText);
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+    res.setHeader('Content-Disposition', 'attachment; filename="optimized-cv.docx"');
+    res.send(buffer);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Download cover letter as docx
+app.post('/download-cover', async (req, res) => {
+  const { coverText } = req.body;
+  if (!coverText) return res.status(400).json({ error: 'Missing cover letter text' });
+  try {
+    const buffer = await parseCoverLetterToDocx(coverText);
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+    res.setHeader('Content-Disposition', 'attachment; filename="cover-letter.docx"');
+    res.send(buffer);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
 
 // Routes must be before static middleware
 app.get('/', (req, res) => {
