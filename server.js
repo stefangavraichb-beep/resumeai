@@ -118,17 +118,46 @@ app.post('/targeted', async (req, res) => {
   const { resume, target } = req.body;
   if (!resume || !target) return res.status(400).json({ error: 'Missing fields' });
   try {
-    const message = await client.messages.create({
+    const messages = [{ role: 'user', content: buildTargetedPrompt(resume, target) }];
+    let fullText = '';
+    let response = await client.messages.create({
       model: 'claude-sonnet-4-6',
-      max_tokens: 6000,
+      max_tokens: 8000,
       system: TARGETED_SYSTEM,
       tools: [{ type: 'web_search_20250305', name: 'web_search' }],
-      messages: [{ role: 'user', content: buildTargetedPrompt(resume, target) }]
+      messages
     });
-    const fullText = message.content
+
+    // Handle multi-turn tool use
+    while (response.stop_reason === 'tool_use') {
+      const assistantMessage = { role: 'assistant', content: response.content };
+      messages.push(assistantMessage);
+
+      const toolResults = response.content
+        .filter(block => block.type === 'tool_use')
+        .map(block => ({
+          type: 'tool_result',
+          tool_use_id: block.id,
+          content: JSON.stringify(block.input)
+        }));
+
+      messages.push({ role: 'user', content: toolResults });
+
+      response = await client.messages.create({
+        model: 'claude-sonnet-4-6',
+        max_tokens: 8000,
+        system: TARGETED_SYSTEM,
+        tools: [{ type: 'web_search_20250305', name: 'web_search' }],
+        messages
+      });
+    }
+
+    // Extract all text blocks from final response
+    fullText = response.content
       .filter(block => block.type === 'text')
       .map(block => block.text)
       .join('\n');
+
     res.json({ result: fullText });
   } catch (error) {
     res.status(500).json({ error: error.message });
