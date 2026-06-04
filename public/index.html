@@ -1050,9 +1050,10 @@
   }
 
   function showLanding() {
-    document.getElementById('landing').classList.add('on');
-    document.getElementById('app').classList.remove('on');
+    document.getElementById('landing').classList.add('active');
+    document.getElementById('app').classList.remove('active');
     document.getElementById('modePill').style.display = 'none';
+    document.getElementById('targetedPanel').style.display = 'none';
   }
 
   function goHome() {
@@ -1074,8 +1075,8 @@
         showToast('✨ Upgrade to Pro to access Targeted Applications');
         return;
       }
-      document.getElementById('landing').classList.remove('on');
-      document.getElementById('app').classList.add('on');
+      document.getElementById('landing').classList.remove('active');
+      document.getElementById('app').classList.add('active');
       document.getElementById('modePill').style.display = 'flex';
       document.getElementById('modeLabel').textContent = 'Targeted';
       // Show targeted panel, hide standard panels
@@ -1085,8 +1086,8 @@
       document.querySelector('.app-body').style.gridTemplateColumns = '1fr';
       return;
     }
-    document.getElementById('landing').classList.remove('on');
-    document.getElementById('app').classList.add('on');
+    document.getElementById('landing').classList.remove('active');
+    document.getElementById('app').classList.add('active');
     document.getElementById('modeLabel').textContent = mode === 'student' ? 'Student' : 'Professional';
     document.getElementById('modePill').style.display = 'flex';
     document.getElementById('targetedPanel').style.display = 'none';
