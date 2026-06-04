@@ -993,6 +993,7 @@
 
     document.getElementById('keywordsWrap').innerHTML = keywords.split(',').map(k=>k.trim()).filter(Boolean).map(k=>`<span class="kw">${k}</span>`).join('');
     document.getElementById('optimizedResume').textContent = optimized;
+    renderCVPreview(optimized);
     document.getElementById('coverLetter').textContent = cover;
 
     const tipsArr = tips.split('\n').filter(t=>t.trim());
@@ -1007,6 +1008,12 @@
         renderFeedbackCards(feedbackData);
       } catch(e) { console.log('Feedback parse error:', e); }
     }
+
+    // Reset to CV tab
+    document.querySelectorAll('.tab-pane').forEach(p => p.style.display = 'none');
+    document.querySelectorAll('.result-tab').forEach(b => b.classList.remove('active'));
+    document.getElementById('tab-cv').style.display = 'block';
+    document.querySelector('.result-tab').classList.add('active');
 
     document.getElementById('resultsContent').style.display = 'block';
     document.getElementById('resultsContent').scrollIntoView({behavior:'smooth'});
@@ -1223,6 +1230,64 @@
     // Mark as applied
     const btn = document.querySelectorAll('#feedbackCards button')[cardIdx * 3 + optionIdx];
     if (btn) { btn.style.background = 'var(--blue-light)'; btn.style.borderColor = 'var(--blue)'; btn.style.color = 'var(--blue)'; }
+  }
+
+
+  function renderCVPreview(text) {
+    const el = document.getElementById('optimizedResume');
+    const lines = text.split('\n');
+    let html = '';
+    lines.forEach((line, i) => {
+      const t = line.trim();
+      if (!t) { html += '<div style="height:8px"></div>'; return; }
+      // Name (first line)
+      if (i === 0 || (i <= 2 && !lines[0].trim())) {
+        html += `<div style="text-align:center;font-weight:700;font-size:1.1rem;margin-bottom:2px;">${t}</div>`;
+        return;
+      }
+      // Contact line
+      if (t.includes('@') || t.includes('•') && t.length < 120) {
+        html += `<div style="text-align:center;font-size:0.8rem;color:var(--muted);margin-bottom:10px;">${t}</div>`;
+        return;
+      }
+      // Section headers (ALL CAPS)
+      const sections = ['EDUCATION','WORK EXPERIENCE','EXPERIENCE','EXTRACURRICULAR','SKILLS','INTERESTS','ACTIVITIES','LANGUAGES'];
+      if (sections.some(s => t.toUpperCase().startsWith(s)) || (t === t.toUpperCase() && t.length > 3 && !t.startsWith('-'))) {
+        html += `<div style="font-weight:700;font-size:0.88rem;border-bottom:1.5px solid var(--text);padding-bottom:2px;margin:14px 0 6px;letter-spacing:0.02em;">${t}</div>`;
+        return;
+      }
+      // Bullet points
+      if (t.startsWith('-') || t.startsWith('•')) {
+        html += `<div style="padding-left:16px;font-size:0.82rem;color:var(--muted);line-height:1.6;">- ${t.replace(/^[-•]\s*/,'')}</div>`;
+        return;
+      }
+      // Skills lines
+      if (t.match(/^(Languages|Skills|Interests|Certifications):/i)) {
+        const idx = t.indexOf(':');
+        html += `<div style="font-size:0.82rem;line-height:1.6;"><strong>${t.substring(0,idx)}</strong>${t.substring(idx)}</div>`;
+        return;
+      }
+      // Entry headers (have dates)
+      if (/\b(January|February|March|April|May|June|July|August|September|October|November|December|20\d{2}|Present)\b/i.test(t)) {
+        const parts = t.split(/\s{2,}/);
+        if (parts.length >= 2) {
+          html += `<div style="display:flex;justify-content:space-between;font-weight:600;font-size:0.85rem;margin-top:10px;"><span>${parts[0]}</span><span style="color:var(--muted);font-weight:400;font-style:italic;">${parts.slice(1).join(' ')}</span></div>`;
+          return;
+        }
+      }
+      // Sub-lines
+      html += `<div style="font-size:0.82rem;color:var(--muted);line-height:1.5;">${t}</div>`;
+    });
+    el.innerHTML = html;
+  }
+
+  function switchTab(tab, btn) {
+    // Hide all panes
+    document.querySelectorAll('.tab-pane').forEach(p => p.style.display = 'none');
+    document.querySelectorAll('.result-tab').forEach(b => b.classList.remove('active'));
+    // Show selected
+    document.getElementById('tab-' + tab).style.display = 'block';
+    btn.classList.add('active');
   }
 
   async function signOut() {
