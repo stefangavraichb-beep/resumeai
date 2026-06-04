@@ -4,752 +4,924 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>ResumeAI — Land Your Dream Job</title>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     :root {
-      --bg: #ffffff;
-      --bg2: #f7f8fc;
-      --surface: #ffffff;
-      --surface2: #f0f2f8;
-      --border: #e4e7f0;
-      --border-active: #c8cfe8;
-      --text: #111827;
-      --muted: #6b7280;
-      --muted2: #9ca3af;
-      --blue: #2563eb;
-      --blue-light: #eff4ff;
-      --blue-mid: #bfcfff;
-      --blue-dark: #1d4ed8;
-      --success: #10b981;
-      --danger: #ef4444;
-      --warning: #f59e0b;
-      --shadow: 0 1px 3px rgba(0,0,0,0.08), 0 4px 16px rgba(0,0,0,0.06);
-      --shadow-lg: 0 8px 32px rgba(0,0,0,0.1);
+      --bg:       #fafaf9;
+      --bg2:      #f4f3f1;
+      --surface:  #ffffff;
+      --border:   #e8e6e1;
+      --border2:  #d4d0c8;
+      --text:     #1a1814;
+      --text2:    #4a4640;
+      --muted:    #8a8680;
+      --muted2:   #b8b4ac;
+      --ink:      #1a1814;
+      --blue:     #1a56db;
+      --blue-h:   #1246c0;
+      --blue-bg:  #eff4ff;
+      --blue-bd:  #c7d7fd;
+      --green:    #057a55;
+      --red:      #c81e1e;
+      --amber:    #92400e;
+      --shadow-s: 0 1px 2px rgba(0,0,0,.06), 0 1px 3px rgba(0,0,0,.04);
+      --shadow-m: 0 4px 6px rgba(0,0,0,.05), 0 2px 4px rgba(0,0,0,.04);
+      --shadow-l: 0 10px 15px rgba(0,0,0,.07), 0 4px 6px rgba(0,0,0,.04);
+      --r:        10px;
+      --r-sm:     6px;
     }
     [data-theme="dark"] {
-      --bg: #0a0a0f;
-      --bg2: #111118;
-      --surface: #141419;
-      --surface2: #1c1c24;
-      --border: #24242e;
-      --border-active: #34344a;
-      --text: #f0f0f8;
-      --muted: #8888a8;
-      --muted2: #55556a;
-      --blue: #6b8eff;
-      --blue-light: #6b8eff12;
-      --blue-mid: #6b8eff30;
-      --blue-dark: #4f6fee;
-      --shadow: 0 1px 3px rgba(0,0,0,0.3), 0 4px 16px rgba(0,0,0,0.2);
-      --shadow-lg: 0 8px 32px rgba(0,0,0,0.4);
-    }
-    * { margin:0; padding:0; box-sizing:border-box; }
-    body {
-      background:var(--bg);
-      color:var(--text);
-      font-family:'Plus Jakarta Sans',sans-serif;
-      min-height:100vh;
-      transition:background 0.3s, color 0.3s;
+      --bg:       #111110;
+      --bg2:      #1a1916;
+      --surface:  #1f1e1b;
+      --border:   #2e2c28;
+      --border2:  #3e3b36;
+      --text:     #edebe6;
+      --text2:    #a8a49c;
+      --muted:    #6e6b64;
+      --muted2:   #4a4740;
+      --blue:     #4e8eff;
+      --blue-h:   #6fa0ff;
+      --blue-bg:  #1a2540;
+      --blue-bd:  #2d3f6e;
+      --green:    #22c55e;
+      --red:      #f87171;
+      --shadow-s: 0 1px 2px rgba(0,0,0,.3);
+      --shadow-m: 0 4px 6px rgba(0,0,0,.3);
+      --shadow-l: 0 10px 15px rgba(0,0,0,.4);
     }
 
-    /* ── NAV ── */
+    *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 14px;
+      line-height: 1.5;
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ─── SCROLLBAR ─── */
+    ::-webkit-scrollbar { width: 5px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 99px; }
+
+    /* ─── SCREENS ─── */
+    .screen { display:none; }
+    .screen.active { display:flex; flex-direction:column; min-height:100vh; }
+
+    /* ─── NAV ─── */
     .nav {
-      display:flex; align-items:center; justify-content:space-between;
-      padding:0 40px;
-      height:60px;
-      background:var(--surface);
-      border-bottom:1px solid var(--border);
-      position:sticky; top:0; z-index:100;
-      box-shadow:var(--shadow);
+      height: 52px;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 24px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      position: sticky; top: 0; z-index: 100;
+      box-shadow: var(--shadow-s);
+      flex-shrink: 0;
     }
     .nav-brand {
-      font-size:1rem; font-weight:800; letter-spacing:-0.01em;
-      color:var(--blue); cursor:pointer;
+      font-family: 'Instrument Serif', serif;
+      font-size: 17px;
+      color: var(--text);
+      cursor: pointer;
+      letter-spacing: -0.01em;
     }
-    .nav-right { display:flex; align-items:center; gap:12px; }
+    .nav-right { display:flex; align-items:center; gap:8px; }
 
-    .theme-btn {
-      width:36px; height:36px;
-      border-radius:10px;
-      background:var(--surface2);
-      border:1px solid var(--border);
-      cursor:pointer;
-      display:flex; align-items:center; justify-content:center;
-      font-size:1rem;
-      transition:all 0.2s;
-      flex-shrink:0;
+    .nav-icon-btn {
+      width: 32px; height: 32px; border-radius: var(--r-sm);
+      background: transparent; border: 1px solid var(--border);
+      cursor: pointer; display: flex; align-items:center; justify-content:center;
+      font-size: 14px; color: var(--muted); transition: all .15s;
     }
-    .theme-btn:hover { border-color:var(--border-active); }
+    .nav-icon-btn:hover { background:var(--bg2); border-color:var(--border2); color:var(--text); }
 
-    .nav-user-btn {
-      display:flex; align-items:center; gap:8px;
-      padding:6px 14px 6px 8px;
-      background:var(--surface2);
-      border:1px solid var(--border);
-      border-radius:10px;
-      cursor:pointer;
-      transition:all 0.2s;
-      font-size:0.82rem;
-      font-weight:500;
-      color:var(--text);
-      font-family:'Plus Jakarta Sans',sans-serif;
+    .mode-tag {
+      display: flex; align-items: center; gap: 5px;
+      padding: 4px 10px; border-radius: var(--r-sm);
+      background: var(--blue-bg); border: 1px solid var(--blue-bd);
+      font-size: 11px; font-weight: 600; color: var(--blue);
+      letter-spacing: .03em; text-transform: uppercase;
     }
-    .nav-user-btn:hover { border-color:var(--border-active); }
-    .nav-avatar {
-      width:26px; height:26px;
-      border-radius:7px;
-      background:var(--blue);
-      color:#fff;
-      display:flex; align-items:center; justify-content:center;
-      font-size:0.72rem; font-weight:700;
+    .mode-dot { width:5px; height:5px; border-radius:50%; background:var(--blue); animation: blink 2s infinite; }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.3} }
+
+    .user-btn {
+      display: flex; align-items: center; gap: 7px;
+      padding: 4px 10px 4px 5px;
+      background: var(--bg2); border: 1px solid var(--border);
+      border-radius: var(--r-sm); cursor: pointer; transition: all .15s;
+      font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 500; color: var(--text2);
+    }
+    .user-btn:hover { border-color:var(--border2); background:var(--bg); }
+    .user-avatar {
+      width: 22px; height: 22px; border-radius: 5px;
+      background: var(--blue); color: #fff;
+      font-size: 11px; font-weight: 700;
+      display: flex; align-items:center; justify-content:center;
     }
 
-    .mode-pill {
-      display:flex; align-items:center; gap:6px;
-      padding:5px 12px;
-      border-radius:8px;
-      font-size:0.75rem; font-weight:600;
-      background:var(--blue-light);
-      border:1px solid var(--blue-mid);
-      color:var(--blue);
-    }
-    .mode-dot { width:5px; height:5px; border-radius:50%; background:var(--blue); animation:pulse 2s infinite; }
-    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
-
-    /* ── SCREENS ── */
-    .screen { display:none; }
-    .screen.active { display:block; }
-
-    /* ── LANDING ── */
+    /* ─── LANDING ─── */
     #landing {
-      min-height:calc(100vh - 60px);
-      display:none;
-      flex-direction:column;
-      align-items:center;
-      justify-content:center;
-      padding:40px 20px;
-      background:var(--bg);
+      align-items: center; justify-content: center;
+      padding: 60px 24px; text-align: center;
+      background: var(--bg);
+      position: relative; overflow: hidden;
+      min-height: 100vh;
     }
-    #landing.active { display:flex; }
+    #landing::before {
+      content: '';
+      position: absolute; inset: 0;
+      background:
+        radial-gradient(ellipse 60% 50% at 50% 0%, rgba(26,86,219,.07) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    /* Fine grid */
+    #landing::after {
+      content: '';
+      position: absolute; inset: 0;
+      background-image:
+        linear-gradient(var(--border) 1px, transparent 1px),
+        linear-gradient(90deg, var(--border) 1px, transparent 1px);
+      background-size: 40px 40px;
+      mask-image: radial-gradient(ellipse 70% 70% at 50% 30%, black, transparent);
+      pointer-events: none; opacity: .5;
+    }
 
-    .hero-badge {
-      display:inline-flex; align-items:center; gap:6px;
-      background:var(--blue-light);
-      border:1px solid var(--blue-mid);
-      color:var(--blue);
-      padding:5px 14px;
-      border-radius:999px;
-      font-size:0.75rem; font-weight:600;
-      margin-bottom:24px;
-      animation:fadeUp 0.5s ease both;
+    .landing-inner { position:relative; z-index:1; max-width:560px; margin:0 auto; }
+
+    .hero-chip {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 4px 12px; border-radius: 999px;
+      background: var(--surface); border: 1px solid var(--border);
+      font-size: 11px; font-weight: 600; color: var(--muted);
+      letter-spacing: .05em; text-transform: uppercase;
+      margin-bottom: 28px;
+      animation: rise .5s ease both;
     }
+    .hero-chip-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--green); }
 
     .hero-title {
-      font-size:clamp(2.2rem,5vw,3.8rem);
-      font-weight:800;
-      letter-spacing:-0.03em;
-      line-height:1.1;
-      text-align:center;
-      margin-bottom:16px;
-      animation:fadeUp 0.5s 0.05s ease both;
+      font-family: 'Instrument Serif', serif;
+      font-size: clamp(2.6rem, 6vw, 4.2rem);
+      font-weight: 400;
+      line-height: 1.05;
+      letter-spacing: -.03em;
+      color: var(--text);
+      margin-bottom: 16px;
+      animation: rise .5s .06s ease both;
     }
-    .hero-title .accent { color:var(--blue); }
+    .hero-title em { font-style: italic; color: var(--blue); }
 
     .hero-sub {
-      color:var(--muted);
-      font-size:1rem;
-      font-weight:400;
-      max-width:420px;
-      text-align:center;
-      line-height:1.7;
-      margin-bottom:44px;
-      animation:fadeUp 0.5s 0.1s ease both;
+      font-size: 15px; font-weight: 300; color: var(--muted);
+      line-height: 1.65; max-width: 400px; margin: 0 auto 44px;
+      animation: rise .5s .12s ease both;
     }
 
-    .path-cards {
-      display:grid; grid-template-columns:1fr 1fr;
-      gap:14px; max-width:560px; width:100%;
-      animation:fadeUp 0.5s 0.15s ease both;
+    .path-grid {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 10px; max-width: 520px; margin: 0 auto;
+      animation: rise .5s .18s ease both;
     }
 
     .path-card {
-      background:var(--surface);
-      border:2px solid var(--border);
-      border-radius:18px;
-      padding:28px 24px;
-      cursor:pointer;
-      transition:all 0.25s;
-      text-align:left;
-      position:relative;
-      overflow:hidden;
-      box-shadow:var(--shadow);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--r);
+      padding: 22px 20px 18px;
+      cursor: pointer; text-align: left;
+      transition: border-color .2s, box-shadow .2s, transform .2s;
+      position: relative; overflow: hidden;
     }
     .path-card:hover {
-      border-color:var(--blue);
-      transform:translateY(-3px);
-      box-shadow:var(--shadow-lg), 0 0 0 4px var(--blue-light);
+      border-color: var(--blue-bd);
+      box-shadow: var(--shadow-l), 0 0 0 3px var(--blue-bg);
+      transform: translateY(-2px);
     }
     .path-card-icon {
-      width:44px; height:44px;
-      border-radius:12px;
-      background:var(--blue-light);
-      border:1px solid var(--blue-mid);
-      display:flex; align-items:center; justify-content:center;
-      font-size:1.3rem;
-      margin-bottom:16px;
-      transition:background 0.2s;
+      width: 36px; height: 36px; border-radius: 8px;
+      background: var(--bg2); border: 1px solid var(--border);
+      display: flex; align-items:center; justify-content:center;
+      font-size: 18px; margin-bottom: 14px;
+      transition: background .2s;
     }
-    .path-card:hover .path-card-icon { background:var(--blue-mid); }
-    .path-card h2 { font-size:1.05rem; font-weight:700; margin-bottom:6px; }
-    .path-card p { color:var(--muted); font-size:0.8rem; line-height:1.6; margin-bottom:16px; }
-    .path-tags { display:flex; flex-wrap:wrap; gap:5px; }
+    .path-card:hover .path-card-icon { background: var(--blue-bg); border-color: var(--blue-bd); }
+    .path-card h3 {
+      font-size: 14px; font-weight: 600; color: var(--text);
+      margin-bottom: 5px;
+    }
+    .path-card p { font-size: 12px; color: var(--muted); line-height: 1.5; margin-bottom: 14px; }
+    .path-tags { display:flex; flex-wrap:wrap; gap:4px; }
     .path-tag {
-      font-size:0.68rem; padding:2px 9px;
-      border-radius:6px;
-      background:var(--bg2);
-      border:1px solid var(--border);
-      color:var(--muted);
-      font-weight:500;
-      transition:all 0.2s;
+      font-size: 10px; padding: 2px 7px; border-radius: 4px;
+      background: var(--bg2); border: 1px solid var(--border);
+      color: var(--muted); font-weight: 500;
+      transition: all .2s;
     }
-    .path-card:hover .path-tag { background:var(--blue-light); border-color:var(--blue-mid); color:var(--blue); }
+    .path-card:hover .path-tag { background:var(--blue-bg); border-color:var(--blue-bd); color:var(--blue); }
     .path-arrow {
-      position:absolute; bottom:24px; right:22px;
-      color:var(--muted2); font-size:1rem;
-      transition:all 0.2s;
+      position: absolute; bottom: 18px; right: 18px;
+      font-size: 14px; color: var(--muted2);
+      transition: all .2s;
     }
-    .path-card:hover .path-arrow { color:var(--blue); transform:translateX(4px); }
+    .path-card:hover .path-arrow { color: var(--blue); transform: translateX(3px); }
 
-    @keyframes fadeUp { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
-
-    /* ── APP ── */
-    #app { display:none; }
-    #app.active { display:block; }
-
-    .app-body {
-      display:grid;
-      grid-template-columns:460px 1fr;
-      height:calc(100vh - 60px);
+    /* PRO card spans full width */
+    .path-card.pro-card {
+      grid-column: 1 / -1;
+      display: flex; align-items: center; gap: 16px;
+      padding: 16px 20px;
     }
+    .path-card.pro-card .path-card-icon { margin-bottom: 0; flex-shrink: 0; }
+    .path-card.pro-card > div { flex: 1; }
+    .path-card.pro-card p { margin-bottom: 0; }
 
-    .panel-left {
-      border-right:1px solid var(--border);
-      overflow-y:auto;
-      padding:28px 32px;
-      background:var(--bg2);
-    }
-    .panel-right {
-      overflow-y:auto;
-      background:var(--bg);
+    .pro-badge {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 2px 7px; border-radius: 4px;
+      background: linear-gradient(135deg, #1a56db, #4f46e5);
+      color: #fff; font-size: 9px; font-weight: 700;
+      letter-spacing: .06em; text-transform: uppercase;
+      vertical-align: middle; margin-left: 6px;
     }
 
-    .field-label {
-      font-size:0.7rem; text-transform:uppercase;
-      letter-spacing:0.1em; color:var(--muted);
-      font-weight:600; margin-bottom:8px; display:block;
+    @keyframes rise { from { opacity:0; transform:translateY(14px); } to { opacity:1; transform:none; } }
+
+    /* ─── APP ─── */
+    #app { flex-direction: column; }
+    .app-layout {
+      display: grid;
+      grid-template-columns: 340px 1fr;
+      height: calc(100vh - 52px);
+      overflow: hidden;
     }
 
-    .template-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-bottom:24px; }
-    .tpl-card {
-      background:var(--surface); border:2px solid var(--border);
-      border-radius:10px; padding:10px 6px;
-      text-align:center; cursor:pointer; transition:all 0.2s;
+    /* ─── LEFT PANEL ─── */
+    .left-panel {
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      display: flex; flex-direction: column;
+      overflow: hidden;
     }
-    .tpl-card:hover { border-color:var(--border-active); }
-    .tpl-card.selected { border-color:var(--blue); background:var(--blue-light); }
-    .tpl-icon { font-size:1.2rem; display:block; margin-bottom:4px; }
-    .tpl-name { font-size:0.62rem; color:var(--muted); font-weight:600; letter-spacing:0.04em; text-transform:uppercase; }
-    .tpl-card.selected .tpl-name { color:var(--blue); }
+    .left-scroll { flex: 1; overflow-y: auto; padding: 20px; }
 
+    .section-label {
+      font-size: 10px; font-weight: 600; letter-spacing: .08em;
+      text-transform: uppercase; color: var(--muted);
+      margin-bottom: 8px; display: block;
+    }
+
+    /* Template picker */
+    .tpl-row { display:grid; grid-template-columns:repeat(4,1fr); gap:6px; margin-bottom:18px; }
+    .tpl-item {
+      border: 1.5px solid var(--border); border-radius: var(--r-sm);
+      padding: 9px 6px; text-align: center; cursor: pointer;
+      transition: all .15s; background: var(--bg2);
+    }
+    .tpl-item:hover { border-color: var(--border2); background: var(--bg); }
+    .tpl-item.on { border-color: var(--blue); background: var(--blue-bg); }
+    .tpl-emoji { font-size: 16px; display:block; margin-bottom:3px; }
+    .tpl-name { font-size: 9px; font-weight: 600; color: var(--muted); letter-spacing:.04em; text-transform:uppercase; }
+    .tpl-item.on .tpl-name { color: var(--blue); }
+
+    /* Upload zone */
     .upload-zone {
-      border:2px dashed var(--border);
-      border-radius:10px; padding:14px;
-      text-align:center; cursor:pointer; transition:all 0.2s; margin-bottom:24px;
-      background:var(--surface);
+      border: 1.5px dashed var(--border2); border-radius: var(--r-sm);
+      padding: 12px; text-align: center; cursor: pointer;
+      transition: all .15s; margin-bottom: 18px; background: var(--bg2);
+      font-size: 12px; color: var(--muted);
     }
-    .upload-zone:hover { border-color:var(--blue-mid); background:var(--blue-light); }
-    .upload-zone.has-file { border-color:var(--success); background:#10b98110; }
-    .upload-zone p { color:var(--muted); font-size:0.8rem; }
-    .upload-zone.has-file p { color:var(--success); font-weight:500; }
+    .upload-zone:hover { border-color: var(--blue); background: var(--blue-bg); color: var(--blue); }
+    .upload-zone.has-file { border-color: var(--green); background: #f0fdf4; color: var(--green); }
     #templateFile { display:none; }
 
-    .field-group { margin-bottom:18px; }
-
-    textarea {
-      width:100%; background:var(--surface);
-      border:2px solid var(--border); border-radius:10px;
-      color:var(--text); padding:12px 14px;
-      font-size:0.88rem; resize:vertical; outline:none;
-      font-family:'Plus Jakarta Sans',sans-serif;
-      transition:border 0.2s; line-height:1.6;
+    /* Textareas */
+    .field-block { margin-bottom: 14px; }
+    textarea, .fake-input {
+      width: 100%;
+      background: var(--bg2); border: 1.5px solid var(--border);
+      border-radius: var(--r-sm); color: var(--text);
+      padding: 10px 12px; font-size: 13px;
+      font-family: 'DM Sans', sans-serif; line-height: 1.55;
+      resize: vertical; outline: none;
+      transition: border-color .15s, background .15s;
     }
-    textarea:focus { border-color:var(--blue); }
-    textarea::placeholder { color:var(--muted2); }
+    textarea:focus { border-color: var(--blue-bd); background: var(--surface); }
+    textarea::placeholder { color: var(--muted2); }
 
-    .optimize-btn {
-      width:100%; padding:14px;
-      border:none; border-radius:12px;
-      font-size:0.92rem; font-weight:700;
-      cursor:pointer; transition:all 0.2s;
-      font-family:'Plus Jakarta Sans',sans-serif;
-      background:var(--blue); color:#fff;
-      margin-top:4px; letter-spacing:0.01em;
-      box-shadow:0 4px 14px rgba(37,99,235,0.3);
+    /* Optimize button */
+    .left-footer { padding: 16px 20px; border-top: 1px solid var(--border); flex-shrink: 0; }
+    .opt-btn {
+      width: 100%; padding: 11px;
+      background: var(--blue); border: none; border-radius: var(--r-sm);
+      color: #fff; font-size: 13px; font-weight: 600;
+      font-family: 'DM Sans', sans-serif;
+      cursor: pointer; transition: all .15s;
+      display: flex; align-items: center; justify-content: center; gap: 7px;
+      box-shadow: 0 1px 2px rgba(26,86,219,.3), 0 4px 12px rgba(26,86,219,.2);
     }
-    .optimize-btn:hover { background:var(--blue-dark); transform:translateY(-1px); box-shadow:0 6px 20px rgba(37,99,235,0.4); }
-    .optimize-btn:disabled { opacity:0.5; cursor:not-allowed; transform:none; box-shadow:none; }
+    .opt-btn:hover { background: var(--blue-h); transform: translateY(-1px); box-shadow: 0 2px 4px rgba(26,86,219,.3), 0 6px 16px rgba(26,86,219,.25); }
+    .opt-btn:disabled { opacity: .45; cursor: not-allowed; transform: none; box-shadow: none; }
+    .opt-btn-icon { font-size: 15px; }
 
-    .error-box {
-      background:#ef444410; border:1px solid #ef444430;
-      color:#ef4444; padding:10px 12px;
-      border-radius:8px; margin-top:10px; font-size:0.8rem; display:none;
+    .error-msg {
+      margin-top: 10px; padding: 9px 11px; border-radius: var(--r-sm);
+      background: #fef2f2; border: 1px solid #fecaca;
+      color: var(--red); font-size: 12px; display: none;
+    }
+    [data-theme="dark"] .error-msg { background: #2d1515; border-color: #5c2020; }
+
+    /* ─── RIGHT PANEL ─── */
+    .right-panel {
+      display: flex; flex-direction: column;
+      overflow: hidden; background: var(--bg);
     }
 
-    /* RIGHT PANEL */
-    .empty-state {
-      display:flex; flex-direction:column; align-items:center;
-      justify-content:center; height:100%; gap:10px;
-      color:var(--muted); text-align:center; padding:40px;
-    }
-    .empty-icon { font-size:2.5rem; margin-bottom:8px; opacity:0.4; }
-
-    /* History */
+    /* History bar */
     .history-bar {
-      background:var(--bg2); border-bottom:1px solid var(--border);
-      padding:10px 28px; display:none; align-items:center; gap:10px;
-      flex-wrap:wrap;
+      padding: 8px 20px; border-bottom: 1px solid var(--border);
+      display: none; align-items: center; gap: 8px; flex-wrap: wrap;
+      background: var(--surface); flex-shrink: 0;
     }
-    .history-bar.visible { display:flex; }
-    .history-label { font-size:0.68rem; font-weight:700; text-transform:uppercase; letter-spacing:0.1em; color:var(--muted); flex-shrink:0; }
-    .history-chip {
-      padding:4px 12px; border-radius:999px;
-      background:var(--surface); border:1.5px solid var(--border);
-      font-size:0.75rem; color:var(--muted); cursor:pointer;
-      transition:all 0.2s; white-space:nowrap; max-width:200px;
-      overflow:hidden; text-overflow:ellipsis;
-      font-family:'Plus Jakarta Sans',sans-serif;
+    .history-bar.visible { display: flex; }
+    .history-label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); flex-shrink: 0; }
+    .h-chip {
+      padding: 3px 10px; border-radius: 999px;
+      background: var(--bg2); border: 1px solid var(--border);
+      font-size: 11px; color: var(--muted); cursor: pointer;
+      transition: all .15s; white-space: nowrap; max-width: 180px;
+      overflow: hidden; text-overflow: ellipsis;
+      font-family: 'DM Sans', sans-serif;
     }
-    .history-chip:hover { border-color:var(--blue); color:var(--blue); background:var(--blue-light); }
-    .history-chip.active { border-color:var(--blue); color:var(--blue); background:var(--blue-light); }
+    .h-chip:hover, .h-chip.on { background: var(--blue-bg); border-color: var(--blue-bd); color: var(--blue); }
 
-    .loading-state {
-      display:none; flex-direction:column; align-items:center;
-      justify-content:center; height:100%; gap:14px;
+    /* Empty / loading states */
+    .state-box {
+      flex: 1; display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      gap: 8px; color: var(--muted); text-align: center; padding: 40px;
     }
-    .loader-ring {
-      width:36px; height:36px;
-      border:3px solid var(--border);
-      border-top-color:var(--blue);
-      border-radius:50%;
-      animation:spin 0.7s linear infinite;
+    .state-icon { font-size: 28px; opacity: .25; margin-bottom: 4px; }
+    .state-title { font-size: 14px; font-weight: 500; color: var(--text2); }
+    .state-sub { font-size: 12px; color: var(--muted); }
+    .spinner {
+      width: 32px; height: 32px;
+      border: 2.5px solid var(--border2); border-top-color: var(--blue);
+      border-radius: 50%; animation: spin .7s linear infinite;
     }
-    @keyframes spin { to{transform:rotate(360deg)} }
-    .loader-text { color:var(--muted); font-size:0.85rem; font-weight:500; }
+    @keyframes spin { to { transform: rotate(360deg); } }
 
-    .results-content { display:none; padding:28px 32px; animation:fadeUp 0.4s ease both; }
+    /* Results */
+    .results-wrap {
+      flex: 1; overflow-y: auto; display: none;
+      flex-direction: column;
+    }
+    .results-wrap.show { display: flex; }
 
-    .score-hero {
-      background:var(--surface); border:2px solid var(--border);
-      border-radius:16px; padding:24px; margin-bottom:14px;
-      display:flex; align-items:center; gap:24px;
-      box-shadow:var(--shadow);
+    /* Score row */
+    .score-row {
+      display: grid; grid-template-columns: 160px 1fr;
+      gap: 12px; padding: 16px 20px; flex-shrink: 0;
     }
-    .score-ring { position:relative; width:80px; height:80px; flex-shrink:0; }
-    .score-ring svg { transform:rotate(-90deg); }
-    .score-ring circle { fill:none; stroke-width:5; }
-    .score-bg { stroke:var(--border); }
-    .score-fill { stroke:var(--success); stroke-linecap:round; transition:stroke-dashoffset 1.2s cubic-bezier(0.4,0,0.2,1); }
-    .score-fill.mid { stroke:var(--warning); }
-    .score-fill.low { stroke:var(--danger); }
-    .score-num {
-      position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
-      font-size:1.15rem; font-weight:800; color:var(--text);
+    .score-card, .kw-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--r); box-shadow: var(--shadow-s);
     }
-    .score-info h3 { font-size:1rem; font-weight:700; margin-bottom:4px; }
-    .score-info p { color:var(--muted); font-size:0.82rem; line-height:1.5; }
+    .score-card {
+      padding: 16px; display: flex; flex-direction: column;
+      align-items: center; justify-content: center; gap: 8px; text-align: center;
+    }
+    .score-ring-wrap { position: relative; width: 68px; height: 68px; }
+    .score-ring-wrap svg { transform: rotate(-90deg); }
+    .score-ring-wrap circle { fill: none; stroke-width: 5; }
+    .score-bg-c { stroke: var(--border2); }
+    .score-fill-c { stroke: var(--green); stroke-linecap: round; transition: stroke-dashoffset 1.2s cubic-bezier(.4,0,.2,1); }
+    .score-fill-c.mid { stroke: #d97706; }
+    .score-fill-c.low { stroke: var(--red); }
+    .score-num { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-family:'Instrument Serif',serif; font-size: 18px; font-weight:400; }
+    .score-lbl { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+    .score-explain { font-size: 11px; color: var(--muted); line-height: 1.4; }
 
-    .result-block {
-      background:var(--surface); border:2px solid var(--border);
-      border-radius:14px; padding:20px; margin-bottom:12px;
-      box-shadow:var(--shadow);
-      animation:fadeUp 0.4s ease both;
+    .kw-card { padding: 14px 16px; }
+    .card-label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin-bottom: 10px; }
+    .kw-wrap { display: flex; flex-wrap: wrap; gap: 5px; }
+    .kw-tag {
+      padding: 2px 8px; border-radius: 4px;
+      background: #fef2f2; border: 1px solid #fecaca; color: var(--red);
+      font-size: 11px; font-weight: 500;
     }
-    .result-block:nth-child(2){animation-delay:0.05s}
-    .result-block:nth-child(3){animation-delay:0.1s}
-    .result-block:nth-child(4){animation-delay:0.15s}
-    .result-block:nth-child(5){animation-delay:0.2s}
+    [data-theme="dark"] .kw-tag { background: #2d1515; border-color: #5c2020; }
 
-    .result-block h4 {
-      font-size:0.72rem; text-transform:uppercase; letter-spacing:0.1em;
-      color:var(--muted); margin-bottom:12px; font-weight:600;
+    /* Tabs */
+    .tabs-row {
+      display: flex; gap: 2px; padding: 0 20px 0;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface); flex-shrink: 0;
     }
-    .keywords-wrap { display:flex; flex-wrap:wrap; gap:6px; }
-    .kw {
-      background:#ef444412; border:1px solid #ef444430;
-      color:#ef4444; padding:3px 10px; border-radius:6px; font-size:0.75rem; font-weight:500;
+    .tab {
+      padding: 10px 14px; font-size: 12px; font-weight: 500;
+      color: var(--muted); cursor: pointer; border: none;
+      background: transparent; font-family: 'DM Sans', sans-serif;
+      border-bottom: 2px solid transparent; margin-bottom: -1px;
+      transition: color .15s, border-color .15s;
     }
-    .result-text { color:var(--muted); font-size:0.85rem; line-height:1.8; white-space:pre-wrap; }
-    .copy-btn {
-      background:var(--bg2); border:2px solid var(--border);
-      color:var(--muted); padding:7px 14px; border-radius:8px;
-      cursor:pointer; font-size:0.75rem; margin-top:12px;
-      transition:all 0.2s; font-family:'Plus Jakarta Sans',sans-serif; font-weight:600;
-    }
-    .copy-btn:hover { border-color:var(--blue); color:var(--blue); background:var(--blue-light); }
-    .tips-list { list-style:none; display:flex; flex-direction:column; gap:10px; }
-    .tips-list li { display:flex; gap:10px; color:var(--muted); font-size:0.85rem; line-height:1.6; }
-    .tips-list li::before { content:'→'; color:var(--blue); flex-shrink:0; font-weight:700; }
+    .tab:hover { color: var(--text2); }
+    .tab.on { color: var(--blue); border-bottom-color: var(--blue); font-weight: 600; }
 
-    /* ── PROFILE MODAL ── */
-    .modal-overlay {
-      position:fixed; inset:0; background:rgba(0,0,0,0.5);
-      backdrop-filter:blur(4px);
-      z-index:200; display:none;
-      align-items:center; justify-content:center;
-      animation:fadeIn 0.2s ease;
-    }
-    .modal-overlay.open { display:flex; }
+    /* Tab content */
+    .tab-body { flex: 1; overflow-y: auto; }
+    .tab-pane { display: none; padding: 20px; animation: fadeIn .2s ease; }
+    .tab-pane.on { display: block; }
     @keyframes fadeIn { from{opacity:0} to{opacity:1} }
 
-    .modal {
-      background:var(--surface); border:2px solid var(--border);
-      border-radius:20px; padding:32px;
-      width:100%; max-width:440px;
-      box-shadow:var(--shadow-lg);
-      animation:slideUp 0.3s ease;
-      position:relative;
+    /* CV preview */
+    .cv-doc {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--r); box-shadow: var(--shadow-m);
+      padding: 36px 40px;
+      font-family: 'Times New Roman', Georgia, serif;
+      font-size: 13px; line-height: 1.65; color: var(--text);
     }
-    @keyframes slideUp { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+    .cv-name { text-align:center; font-weight:700; font-size:18px; margin-bottom:3px; }
+    .cv-contact { text-align:center; font-size:11px; color:var(--muted); margin-bottom:14px; }
+    .cv-section {
+      font-weight:700; font-size:12px;
+      border-bottom: 1.5px solid var(--text);
+      padding-bottom: 2px; margin: 14px 0 6px;
+      text-transform: uppercase; letter-spacing: .04em;
+    }
+    .cv-entry {
+      display:flex; justify-content:space-between; align-items:baseline;
+      font-weight:600; font-size:12.5px; margin-top:8px;
+    }
+    .cv-entry-date { font-weight:400; font-style:italic; font-size:11px; color:var(--muted); flex-shrink:0; margin-left:12px; }
+    .cv-sub { font-size:11.5px; color:var(--text2); }
+    .cv-bullet { font-size:11.5px; color:var(--text2); padding-left:14px; position:relative; }
+    .cv-bullet::before { content:'-'; position:absolute; left:0; }
+    .cv-skills { font-size:11.5px; }
+    .cv-skills strong { font-weight:600; }
+    .cv-plain { font-size:11.5px; color:var(--text2); }
+    .cv-gap { height:6px; }
 
+    /* Actions */
+    .tab-actions {
+      display: flex; gap: 8px; padding: 14px 20px;
+      border-top: 1px solid var(--border);
+      background: var(--surface); flex-shrink: 0;
+    }
+    .act-btn {
+      padding: 8px 16px; border-radius: var(--r-sm);
+      font-size: 12px; font-weight: 600; cursor: pointer;
+      font-family: 'DM Sans', sans-serif; transition: all .15s;
+      border: 1.5px solid var(--border); background: var(--bg2); color: var(--text2);
+    }
+    .act-btn:hover { border-color:var(--border2); color:var(--text); }
+    .act-btn.primary {
+      background: var(--blue); border-color: var(--blue); color: #fff;
+      box-shadow: 0 1px 2px rgba(26,86,219,.25);
+    }
+    .act-btn.primary:hover { background: var(--blue-h); }
+
+    /* Interview tips */
+    .tips-list { display:flex; flex-direction:column; gap:8px; }
+    .tip-item {
+      padding: 12px 14px; border-radius: var(--r-sm);
+      background: var(--surface); border: 1px solid var(--border);
+      font-size: 13px; color: var(--text2); line-height: 1.55;
+      display: flex; gap: 10px; box-shadow: var(--shadow-s);
+    }
+    .tip-arrow { color: var(--blue); font-weight:700; flex-shrink:0; margin-top:1px; }
+
+    /* Suggestions */
+    .suggest-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+    .suggest-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--r-sm); padding: 12px 14px; box-shadow: var(--shadow-s);
+    }
+    .suggest-head { display:flex; align-items:center; gap:6px; margin-bottom:6px; }
+    .suggest-icon { font-size:13px; }
+    .suggest-cat { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); }
+    .suggest-issue { font-size:12px; font-weight:600; color:var(--text); margin-bottom:8px; line-height:1.4; }
+    .suggest-opts { display:flex; flex-direction:column; gap:4px; }
+    .suggest-opt {
+      padding:6px 9px; border-radius:5px;
+      background:var(--bg2); border:1px solid var(--border);
+      font-size:11px; color:var(--text2); cursor:pointer;
+      transition:all .15s; font-family:'DM Sans',sans-serif; text-align:left;
+    }
+    .suggest-opt:hover { border-color:var(--blue-bd); color:var(--blue); background:var(--blue-bg); }
+
+    /* Targeted panel */
+    #targetedPanel {
+      display: none; position: absolute; top: 52px; left: 0; right: 0; bottom: 0;
+      overflow-y: auto; background: var(--bg); z-index: 10;
+    }
+    .targeted-inner { max-width: 680px; margin: 0 auto; padding: 32px 24px; }
+    .targeted-title {
+      font-family: 'Instrument Serif', serif; font-size: 26px; font-weight:400;
+      letter-spacing:-.02em; margin-bottom:4px;
+    }
+    .targeted-sub { font-size:13px; color:var(--muted); margin-bottom:28px; line-height:1.6; }
+    .targeted-input {
+      width:100%; background:var(--surface); border:1.5px solid var(--border);
+      border-radius:var(--r-sm); color:var(--text); padding:11px 14px;
+      font-size:14px; outline:none; font-family:'DM Sans',sans-serif;
+      transition:border .15s; margin-bottom:14px;
+    }
+    .targeted-input:focus { border-color:var(--blue-bd); }
+    .targeted-input::placeholder { color:var(--muted2); }
+    .targeted-btn {
+      width:100%; padding:12px; background:var(--blue); border:none;
+      border-radius:var(--r-sm); color:#fff; font-size:13px; font-weight:600;
+      cursor:pointer; font-family:'DM Sans',sans-serif; transition:all .15s;
+      box-shadow:0 2px 8px rgba(26,86,219,.3);
+    }
+    .targeted-btn:hover { background:var(--blue-h); transform:translateY(-1px); }
+    .targeted-btn:disabled { opacity:.5; cursor:not-allowed; transform:none; }
+
+    .t-result-block {
+      background:var(--surface); border:1px solid var(--border);
+      border-radius:var(--r); padding:20px 22px; margin-top:14px;
+      box-shadow:var(--shadow-s);
+    }
+    .t-block-label { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.08em; color:var(--muted); margin-bottom:10px; }
+    .t-block-text { font-size:13px; color:var(--text2); line-height:1.7; white-space:pre-wrap; }
+    .t-result-block.highlight { border-color:var(--blue-bd); background:var(--blue-bg); }
+    .t-result-block.highlight .t-block-label { color:var(--blue); }
+    .t-result-block.highlight .t-block-text { color:var(--blue); font-weight:500; }
+
+    .t-loading { text-align:center; padding:40px 0; display:none; }
+    .t-load-msg { font-size:13px; color:var(--muted); margin-top:14px; }
+
+    /* Profile modal */
+    .overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,.45);
+      backdrop-filter: blur(3px); z-index: 200;
+      display: none; align-items: center; justify-content: center;
+      animation: fadeIn .15s ease;
+    }
+    .overlay.open { display: flex; }
+    .modal {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 14px; padding: 28px; width: 100%; max-width: 400px;
+      box-shadow: var(--shadow-l); position: relative;
+      animation: rise .25s ease;
+    }
     .modal-close {
-      position:absolute; top:16px; right:16px;
-      width:32px; height:32px; border-radius:8px;
-      background:var(--surface2); border:1px solid var(--border);
+      position:absolute; top:14px; right:14px;
+      width:28px; height:28px; border-radius:6px;
+      background:var(--bg2); border:1px solid var(--border);
       cursor:pointer; display:flex; align-items:center; justify-content:center;
-      font-size:1rem; color:var(--muted); transition:all 0.2s;
+      font-size:13px; color:var(--muted); transition:all .15s;
     }
     .modal-close:hover { background:var(--border); color:var(--text); }
-
-    .profile-avatar {
-      width:64px; height:64px; border-radius:16px;
+    .modal-avatar {
+      width:52px; height:52px; border-radius:10px;
       background:var(--blue); color:#fff;
       display:flex; align-items:center; justify-content:center;
-      font-size:1.6rem; font-weight:800;
-      margin-bottom:16px;
+      font-family:'Instrument Serif',serif; font-size:22px;
+      margin-bottom:14px;
     }
-    .modal h2 { font-size:1.2rem; font-weight:700; margin-bottom:4px; }
-    .modal .email { color:var(--muted); font-size:0.85rem; margin-bottom:24px; }
+    .modal h2 { font-family:'Instrument Serif',serif; font-size:20px; font-weight:400; margin-bottom:2px; }
+    .modal-email { font-size:12px; color:var(--muted); margin-bottom:20px; }
 
-    .plan-card {
-      background:var(--bg2); border:2px solid var(--border);
-      border-radius:12px; padding:16px; margin-bottom:20px;
+    .plan-box {
+      background:var(--bg2); border:1px solid var(--border);
+      border-radius:var(--r-sm); padding:14px; margin-bottom:16px;
     }
-    .plan-label { font-size:0.68rem; text-transform:uppercase; letter-spacing:0.1em; color:var(--muted); font-weight:600; margin-bottom:6px; }
-    .plan-name { font-size:1rem; font-weight:700; color:var(--blue); margin-bottom:8px; }
-    .plan-usage { font-size:0.82rem; color:var(--muted); margin-bottom:10px; }
-    .usage-bar { height:6px; background:var(--border); border-radius:999px; overflow:hidden; }
-    .usage-fill { height:100%; background:var(--blue); border-radius:999px; transition:width 0.5s ease; }
+    .plan-lbl { font-size:10px; font-weight:600; text-transform:uppercase; letter-spacing:.08em; color:var(--muted); margin-bottom:4px; }
+    .plan-name { font-size:14px; font-weight:600; color:var(--blue); margin-bottom:6px; }
+    .plan-usage { font-size:12px; color:var(--muted); margin-bottom:8px; }
+    .usage-track { height:4px; background:var(--border); border-radius:999px; overflow:hidden; }
+    .usage-fill { height:100%; background:var(--blue); border-radius:999px; transition:width .5s ease; }
 
     .upgrade-btn {
-      width:100%; padding:12px;
-      background:var(--blue); color:#fff;
-      border:none; border-radius:10px;
-      font-size:0.88rem; font-weight:700;
-      cursor:pointer; transition:all 0.2s;
-      font-family:'Plus Jakarta Sans',sans-serif;
-      box-shadow:0 4px 14px rgba(37,99,235,0.3);
-      margin-bottom:10px;
+      width:100%; padding:11px; background:var(--blue); border:none;
+      border-radius:var(--r-sm); color:#fff; font-size:13px; font-weight:600;
+      cursor:pointer; font-family:'DM Sans',sans-serif; transition:all .15s;
+      box-shadow:0 1px 2px rgba(26,86,219,.25); margin-bottom:8px;
     }
-    .upgrade-btn:hover { background:var(--blue-dark); transform:translateY(-1px); }
-
+    .upgrade-btn:hover { background:var(--blue-h); }
     .signout-btn {
-      width:100%; padding:11px;
-      background:transparent;
-      border:2px solid var(--border);
-      color:var(--muted);
-      border-radius:10px;
-      font-size:0.88rem; font-weight:600;
-      cursor:pointer; transition:all 0.2s;
-      font-family:'Plus Jakarta Sans',sans-serif;
+      width:100%; padding:10px; background:transparent;
+      border:1.5px solid var(--border); color:var(--muted);
+      border-radius:var(--r-sm); font-size:13px; font-weight:500;
+      cursor:pointer; font-family:'DM Sans',sans-serif; transition:all .15s;
     }
-    .signout-btn:hover { border-color:var(--danger); color:var(--danger); background:#ef444408; }
+    .signout-btn:hover { border-color:var(--red); color:var(--red); }
+    .modal-divider { height:1px; background:var(--border); margin:16px 0; }
 
-    .divider-h { height:1px; background:var(--border); margin:20px 0; }
+    /* Toast */
+    .toast {
+      position:fixed; bottom:24px; left:50%; transform:translateX(-50%);
+      background:var(--ink); color:#fff; padding:10px 18px;
+      border-radius:var(--r-sm); font-size:13px; font-weight:500;
+      box-shadow:var(--shadow-l); z-index:9999;
+      animation:rise .2s ease;
+      white-space:nowrap;
+    }
 
-    @media(max-width:900px) {
-      .path-cards { grid-template-columns:1fr; max-width:320px; }
-      .app-body { grid-template-columns:1fr; height:auto; }
-      .panel-left { height:auto; border-right:none; border-bottom:1px solid var(--border); }
-      .panel-right { height:auto; min-height:50vh; }
-      .nav { padding:0 20px; }
+    @media (max-width:800px) {
+      .path-grid { grid-template-columns:1fr; max-width:320px; }
+      .app-layout { grid-template-columns:1fr; height:auto; }
+      .left-panel { height:auto; border-right:none; border-bottom:1px solid var(--border); }
+      .right-panel { min-height:60vh; }
+      .score-row { grid-template-columns:1fr; }
+      .suggest-grid { grid-template-columns:1fr; }
+      #targetedPanel { position:static; height:auto; }
     }
   </style>
 </head>
 <body>
 
 <!-- NAV -->
-<nav class="nav" id="mainNav" style="display:none">
+<nav class="nav" id="mainNav" style="display:none;">
   <div class="nav-brand" onclick="goHome()">ResumeAI</div>
   <div class="nav-right">
-    <button class="theme-btn" onclick="toggleTheme()" id="themeBtn" title="Toggle theme">☀️</button>
-    <div class="mode-pill" id="modePill" style="display:none">
+    <button class="nav-icon-btn" onclick="toggleTheme()" id="themeBtn" title="Toggle theme">☀️</button>
+    <div class="mode-tag" id="modePill" style="display:none;">
       <div class="mode-dot"></div>
       <span id="modeLabel">Student</span>
     </div>
-    <button class="nav-user-btn" onclick="openProfile()" id="userBtn">
-      <div class="nav-avatar" id="navAvatar">?</div>
+    <button class="user-btn" onclick="openProfile()" id="userBtn">
+      <div class="user-avatar" id="navAvatar">?</div>
       <span id="navEmail">Account</span>
     </button>
   </div>
 </nav>
 
-<!-- LANDING -->
+<!-- ══════ LANDING ══════ -->
 <div id="landing" class="screen">
-  <div class="hero-badge">✨ AI-Powered • Free to start</div>
-  <h1 class="hero-title">Your resume,<br/><span class="accent">perfected.</span></h1>
-  <p class="hero-sub">Paste your CV, pick your path. Get an ATS score, optimized resume, cover letter, and interview tips — instantly.</p>
-  <div class="path-cards">
-    <div class="path-card" onclick="selectPath('student')">
-      <div class="path-card-icon">🎓</div>
-      <h2>Student</h2>
-      <p>Applying for internships, spring weeks, or grad schemes at top firms.</p>
-      <div class="path-tags">
-        <span class="path-tag">Internships</span>
-        <span class="path-tag">Spring Weeks</span>
-        <span class="path-tag">Grad Schemes</span>
-      </div>
-      <span class="path-arrow">→</span>
-    </div>
-    <div class="path-card" onclick="selectPath('pro')">
-      <div class="path-card-icon">💼</div>
-      <h2>Professional</h2>
-      <p>Looking for full-time roles, senior positions, or a career change.</p>
-      <div class="path-tags">
-        <span class="path-tag">Full-time</span>
-        <span class="path-tag">Senior Roles</span>
-        <span class="path-tag">Career Change</span>
-      </div>
-      <span class="path-arrow">→</span>
-    </div>
-    <div class="path-card pro-card" onclick="selectPath('targeted')" style="grid-column:1/-1;display:flex;align-items:center;gap:20px;padding:22px 24px;">
-      <div class="path-card-icon" style="flex-shrink:0;background:linear-gradient(135deg,#eff4ff,#dbeafe);border-color:#bfcfff;">🎯</div>
-      <div style="flex:1">
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
-          <h2 style="font-size:1rem;">Targeted Application</h2>
-          <span style="background:linear-gradient(135deg,#2563eb,#4f46e5);color:#fff;font-size:0.65rem;font-weight:700;padding:2px 8px;border-radius:999px;letter-spacing:0.05em;">PRO</span>
+  <div class="landing-inner">
+    <div class="hero-chip"><div class="hero-chip-dot"></div> AI-Powered · Free to start</div>
+    <h1 class="hero-title">Your resume,<br/><em>perfected.</em></h1>
+    <p class="hero-sub">Paste your CV, pick your path. Get an ATS score, optimised resume, cover letter and interview tips — instantly.</p>
+
+    <div class="path-grid">
+      <div class="path-card" onclick="selectPath('student')">
+        <div class="path-card-icon">🎓</div>
+        <h3>Student</h3>
+        <p>Internships, spring weeks & grad schemes at top firms.</p>
+        <div class="path-tags">
+          <span class="path-tag">Internships</span>
+          <span class="path-tag">Spring Weeks</span>
+          <span class="path-tag">Grad Schemes</span>
         </div>
-        <p style="margin-bottom:0;font-size:0.8rem;">"I want to apply to JP Morgan Spring Week London" — AI researches the company and builds your entire application from scratch.</p>
+        <span class="path-arrow">→</span>
       </div>
-      <span class="path-arrow" style="position:static;flex-shrink:0;">→</span>
+      <div class="path-card" onclick="selectPath('pro')">
+        <div class="path-card-icon">💼</div>
+        <h3>Professional</h3>
+        <p>Full-time roles, senior positions & career changes.</p>
+        <div class="path-tags">
+          <span class="path-tag">Full-time</span>
+          <span class="path-tag">Senior Roles</span>
+          <span class="path-tag">Career Change</span>
+        </div>
+        <span class="path-arrow">→</span>
+      </div>
+      <div class="path-card pro-card" onclick="selectPath('targeted')">
+        <div class="path-card-icon">🎯</div>
+        <div>
+          <h3 style="margin-bottom:3px;">Targeted Application <span class="pro-badge">PRO</span></h3>
+          <p>"Apply to JP Morgan Spring Week London" — AI researches the firm and builds your entire application.</p>
+        </div>
+        <span class="path-arrow">→</span>
+      </div>
     </div>
   </div>
 </div>
 
-<!-- APP -->
+<!-- ══════ APP ══════ -->
 <div id="app" class="screen" style="position:relative;">
-  <div class="app-body">
-    <div class="panel-left">
-      <div class="field-group">
-        <span class="field-label">Template Style</span>
-        <div class="template-grid">
-          <div class="tpl-card selected" onclick="selectTemplate(this,'Clean & Modern')">
-            <span class="tpl-icon">⬜</span><div class="tpl-name">Modern</div>
+  <div class="app-layout">
+
+    <!-- LEFT PANEL -->
+    <div class="left-panel">
+      <div class="left-scroll">
+        <div class="field-block">
+          <span class="section-label">Template Style</span>
+          <div class="tpl-row">
+            <div class="tpl-item on" onclick="selectTemplate(this,'Clean & Modern')"><span class="tpl-emoji">⬜</span><div class="tpl-name">Modern</div></div>
+            <div class="tpl-item" onclick="selectTemplate(this,'Finance & Banking')"><span class="tpl-emoji">🏦</span><div class="tpl-name">Finance</div></div>
+            <div class="tpl-item" onclick="selectTemplate(this,'Tech & Startup')"><span class="tpl-emoji">💻</span><div class="tpl-name">Tech</div></div>
+            <div class="tpl-item" onclick="selectTemplate(this,'Creative')"><span class="tpl-emoji">🎨</span><div class="tpl-name">Creative</div></div>
           </div>
-          <div class="tpl-card" onclick="selectTemplate(this,'Finance & Banking')">
-            <span class="tpl-icon">🏦</span><div class="tpl-name">Finance</div>
+        </div>
+
+        <div class="field-block">
+          <span class="section-label">Upload Template</span>
+          <div class="upload-zone" onclick="document.getElementById('templateFile').click()" id="uploadZone">
+            <span id="uploadLabel">↑ &nbsp;.txt or .md file</span>
+            <input type="file" id="templateFile" accept=".txt,.md" onchange="handleTemplateUpload(event)"/>
           </div>
-          <div class="tpl-card" onclick="selectTemplate(this,'Tech & Startup')">
-            <span class="tpl-icon">💻</span><div class="tpl-name">Tech</div>
-          </div>
-          <div class="tpl-card" onclick="selectTemplate(this,'Creative')">
-            <span class="tpl-icon">🎨</span><div class="tpl-name">Creative</div>
-          </div>
+        </div>
+
+        <div class="field-block">
+          <span class="section-label">Your Resume</span>
+          <textarea id="resume" rows="10" placeholder="Paste your full resume here..."></textarea>
+        </div>
+
+        <div class="field-block">
+          <span class="section-label">Job Description</span>
+          <textarea id="jobDesc" rows="6" placeholder="Paste the job description here..."></textarea>
         </div>
       </div>
 
-      <div class="field-group">
-        <span class="field-label">Upload Your Own Template</span>
-        <div class="upload-zone" onclick="document.getElementById('templateFile').click()" id="uploadZone">
-          <p id="uploadLabel">↑  Upload a .txt or .md template</p>
-          <input type="file" id="templateFile" accept=".txt,.md" onchange="handleTemplateUpload(event)"/>
-        </div>
+      <div class="left-footer">
+        <button class="opt-btn" id="optimizeBtn" onclick="optimize()">
+          <span class="opt-btn-icon">⚡</span> Optimise My Resume
+        </button>
+        <div class="error-msg" id="errorBox"></div>
       </div>
-
-      <div class="field-group">
-        <span class="field-label">Your Current Resume</span>
-        <textarea id="resume" rows="9" placeholder="Paste your full resume here..."></textarea>
-      </div>
-
-      <div class="field-group">
-        <span class="field-label">Job Description</span>
-        <textarea id="jobDesc" rows="6" placeholder="Paste the job description here..."></textarea>
-      </div>
-
-      <button class="optimize-btn" id="optimizeBtn" onclick="optimize()">⚡ Optimize My Resume</button>
-      <div class="error-box" id="errorBox"></div>
     </div>
 
-    <div class="panel-right">
+    <!-- RIGHT PANEL -->
+    <div class="right-panel" id="rightPanel">
+
+      <!-- History bar -->
       <div class="history-bar" id="historyBar">
         <span class="history-label">History</span>
-        <div id="historyChips" style="display:flex;gap:8px;flex-wrap:wrap;"></div>
+        <div id="historyChips" style="display:flex;gap:6px;flex-wrap:wrap;"></div>
       </div>
-      <div id="historyResultsWrap">
-      <div class="empty-state" id="emptyState">
-        <div class="empty-icon">✨</div>
-        <p style="font-size:0.95rem;font-weight:600;color:var(--text)">Ready when you are</p>
-        <p style="font-size:0.82rem">Fill in your resume and job description, then hit Optimize.</p>
+
+      <!-- Empty state -->
+      <div class="state-box" id="emptyState">
+        <div class="state-icon">✦</div>
+        <div class="state-title">Ready when you are</div>
+        <div class="state-sub">Fill in your resume and job description, then hit Optimise.</div>
       </div>
-      <div class="loading-state" id="loadingState">
-        <div class="loader-ring"></div>
-        <p class="loader-text">Analyzing your resume with AI...</p>
+
+      <!-- Loading state -->
+      <div class="state-box" id="loadingState" style="display:none;">
+        <div class="spinner"></div>
+        <div class="state-title" style="margin-top:14px;" id="loadMsg">Analysing your resume...</div>
       </div>
-      <div class="results-content" id="resultsContent">
-        <div class="score-hero">
-          <div class="score-ring">
-            <svg width="80" height="80" viewBox="0 0 80 80">
-              <circle class="score-bg" cx="40" cy="40" r="34"/>
-              <circle class="score-fill" id="scoreFill" cx="40" cy="40" r="34" stroke-dasharray="213.6" stroke-dashoffset="213.6"/>
-            </svg>
-            <div class="score-num" id="scoreNum">—</div>
+
+      <!-- Results -->
+      <div class="results-wrap" id="resultsWrap">
+
+        <!-- Score + Keywords -->
+        <div class="score-row">
+          <div class="score-card">
+            <div class="score-ring-wrap">
+              <svg width="68" height="68" viewBox="0 0 68 68">
+                <circle class="score-bg-c" cx="34" cy="34" r="29"/>
+                <circle class="score-fill-c" id="scoreFill" cx="34" cy="34" r="29" stroke-dasharray="182.2" stroke-dashoffset="182.2"/>
+              </svg>
+              <div class="score-num" id="scoreNum">—</div>
+            </div>
+            <div class="score-lbl">ATS Score</div>
+            <div class="score-explain" id="scoreExplain"></div>
           </div>
-          <div class="score-info">
-            <h3>ATS Score</h3>
-            <p id="scoreExplain">How well your resume matches this role's tracking system.</p>
-          </div>
-        </div>
-        <div class="result-block">
-          <h4>Missing Keywords</h4>
-          <div class="keywords-wrap" id="keywordsWrap"></div>
-        </div>
-        <div class="result-block" id="feedbackBlock" style="display:none;">
-          <h4>💡 Improvement Suggestions</h4>
-          <div id="feedbackCards" style="display:flex;flex-direction:column;gap:10px;"></div>
-        </div>
-        <div class="result-block">
-          <h4>Optimized Resume</h4>
-          <div class="result-text" id="optimizedResume"></div>
-          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;">
-            <button class="copy-btn" onclick="copyText('optimizedResume',this)">Copy</button>
-            <button class="copy-btn" onclick="downloadDoc('cv')" style="background:var(--blue-light);border-color:var(--blue-mid);color:var(--blue);">⬇ Download .docx</button>
+          <div class="kw-card">
+            <div class="card-label">Missing Keywords</div>
+            <div class="kw-wrap" id="keywordsWrap"></div>
           </div>
         </div>
-        <div class="result-block">
-          <h4>Cover Letter</h4>
-          <div class="result-text" id="coverLetter"></div>
-          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;">
-            <button class="copy-btn" onclick="copyText('coverLetter',this)">Copy</button>
-            <button class="copy-btn" onclick="downloadDoc('cover')" style="background:var(--blue-light);border-color:var(--blue-mid);color:var(--blue);">⬇ Download .docx</button>
+
+        <!-- Suggestions (if any) -->
+        <div id="suggestBlock" style="display:none; padding:0 20px 12px;">
+          <div class="card-label" style="margin-bottom:8px;">💡 Suggestions</div>
+          <div class="suggest-grid" id="suggestGrid"></div>
+        </div>
+
+        <!-- Tabs -->
+        <div class="tabs-row">
+          <button class="tab on" onclick="switchTab('cv',this)">📄 CV</button>
+          <button class="tab" onclick="switchTab('cover',this)">✉️ Cover Letter</button>
+          <button class="tab" onclick="switchTab('tips',this)">🎤 Interview Tips</button>
+        </div>
+
+        <div class="tab-body">
+          <div class="tab-pane on" id="tab-cv">
+            <div class="cv-doc" id="optimizedResume"></div>
+          </div>
+          <div class="tab-pane" id="tab-cover">
+            <div class="cv-doc" id="coverLetter" style="font-family:'DM Sans',sans-serif;font-size:13px;"></div>
+          </div>
+          <div class="tab-pane" id="tab-tips">
+            <ul class="tips-list" id="tipsList"></ul>
           </div>
         </div>
-        <div class="result-block">
-          <h4>Interview Tips</h4>
-          <ul class="tips-list" id="tipsList"></ul>
+
+        <div class="tab-actions">
+          <button class="act-btn primary" id="dlBtn" onclick="downloadDoc('cv')">⬇ Download CV (.docx)</button>
+          <button class="act-btn" id="copyBtn" onclick="copyActive()">Copy Text</button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- Targeted panel -->
+  <div id="targetedPanel">
+    <div class="targeted-inner">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
+        <span style="font-size:20px;">🎯</span>
+        <h2 class="targeted-title">Targeted Application</h2>
+        <span class="pro-badge">PRO</span>
+      </div>
+      <p class="targeted-sub">Tell us exactly where you want to apply. Our AI researches the company, finds what they look for, and builds your entire application around it.</p>
+
+      <span class="section-label">Where do you want to apply?</span>
+      <input type="text" class="targeted-input" id="targetInput"
+        placeholder="e.g. JP Morgan Spring Week London, Goldman Sachs Summer Analyst NYC..."
+        onkeydown="if(event.key==='Enter')runTargeted()"/>
+
+      <span class="section-label" style="margin-top:14px;display:block;">Your Current CV</span>
+      <textarea id="targetResume" rows="9" style="margin-bottom:14px;" placeholder="Paste your current CV here..."></textarea>
+
+      <button class="targeted-btn" id="targetBtn" onclick="runTargeted()">🔍 Research & Build My Application</button>
+      <div class="error-msg" id="targetError" style="margin-top:10px;"></div>
+
+      <div class="t-loading" id="targetLoading">
+        <div class="spinner" style="margin:0 auto;"></div>
+        <p class="t-load-msg" id="targetLoadingText">Researching the company...</p>
+      </div>
+
+      <div id="targetResults" style="display:none;">
+        <div class="t-result-block highlight">
+          <div class="t-block-label">🔍 Research Found</div>
+          <div class="t-block-text" id="tResearch"></div>
+        </div>
+        <div class="t-result-block">
+          <div class="t-block-label">🧠 Application Strategy</div>
+          <div class="t-block-text" id="tStrategy"></div>
+        </div>
+        <div class="t-result-block">
+          <div class="t-block-label">📄 Tailored CV</div>
+          <div class="t-block-text" id="tCV"></div>
+          <button class="act-btn primary" style="margin-top:10px;" onclick="copyText('tCV',this)">Copy CV</button>
+        </div>
+        <div class="t-result-block">
+          <div class="t-block-label">✉️ Cover Letter</div>
+          <div class="t-block-text" id="tCover"></div>
+          <button class="act-btn" style="margin-top:10px;" onclick="copyText('tCover',this)">Copy Cover Letter</button>
+        </div>
+        <div class="t-result-block">
+          <div class="t-block-label">🎤 Interview Prep</div>
+          <div class="t-block-text" id="tInterviewPrep"></div>
         </div>
       </div>
     </div>
   </div>
-    <!-- TARGETED PANEL (Pro) -->
-    <div id="targetedPanel" style="display:none;position:absolute;top:60px;left:0;right:0;bottom:0;overflow-y:auto;background:var(--bg);z-index:10;">
-      <div style="max-width:680px;margin:0 auto;padding:24px 32px;">
-        <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
-          <span style="font-size:1.4rem;">🎯</span>
-          <h2 style="font-size:1.3rem;font-weight:800;letter-spacing:-0.02em;">Targeted Application</h2>
-          <span style="background:linear-gradient(135deg,#2563eb,#4f46e5);color:#fff;font-size:0.65rem;font-weight:700;padding:2px 8px;border-radius:999px;">PRO</span>
-        </div>
-        <p style="color:var(--muted);font-size:0.88rem;margin-bottom:32px;line-height:1.6;">Tell us exactly where you want to apply. Our AI will research the company, find what they look for, and build your entire application around it.</p>
-
-        <div class="field-group">
-          <span class="field-label">Where do you want to apply?</span>
-          <input type="text" id="targetInput"
-            placeholder="e.g. JP Morgan Spring Week London, Goldman Sachs Summer Analyst NYC, McKinsey Business Analyst..."
-            style="width:100%;background:var(--surface);border:2px solid var(--border);border-radius:12px;color:var(--text);padding:14px 16px;font-size:0.92rem;outline:none;font-family:'Plus Jakarta Sans',sans-serif;transition:border 0.2s;"
-            onfocus="this.style.borderColor='var(--blue)'" onblur="this.style.borderColor='var(--border)'"
-            onkeydown="if(event.key==='Enter')runTargeted()"/>
-        </div>
-
-        <div class="field-group">
-          <span class="field-label">Your Current CV / Resume</span>
-          <textarea id="targetResume" rows="10"
-            placeholder="Paste your current CV here. The more detail you give, the better the output."
-            style="border-radius:12px;"></textarea>
-        </div>
-
-        <button onclick="runTargeted()" id="targetBtn"
-          style="width:100%;padding:15px;background:linear-gradient(135deg,#2563eb,#4f46e5);color:#fff;border:none;border-radius:12px;font-size:0.92rem;font-weight:700;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;box-shadow:0 4px 20px rgba(37,99,235,0.35);transition:all 0.2s;letter-spacing:0.01em;"
-          onmouseover="this.style.transform='translateY(-1px)';this.style.boxShadow='0 6px 24px rgba(37,99,235,0.45)'"
-          onmouseout="this.style.transform='none';this.style.boxShadow='0 4px 20px rgba(37,99,235,0.35)'">
-          🔍 Research &amp; Build My Application
-        </button>
-        <div class="error-box" id="targetError"></div>
-
-        <!-- Targeted Results -->
-        <div id="targetResults" style="display:none;margin-top:28px;">
-
-          <div id="tResearchBlock" class="result-block" style="border-color:var(--blue-mid);background:var(--blue-light);">
-            <h4 style="color:var(--blue);">🔍 Research Found</h4>
-            <div class="result-text" id="tResearch" style="color:var(--blue-dark);"></div>
-          </div>
-
-          <div id="tStrategyBlock" class="result-block">
-            <h4>🧠 Application Strategy</h4>
-            <div class="result-text" id="tStrategy"></div>
-          </div>
-
-          <div class="result-block">
-            <h4>📄 Tailored CV</h4>
-            <div class="result-text" id="tCV"></div>
-            <button class="copy-btn" onclick="copyText('tCV',this)">Copy CV</button>
-          </div>
-
-          <div class="result-block">
-            <h4>✉️ Cover Letter</h4>
-            <div class="result-text" id="tCover"></div>
-            <button class="copy-btn" onclick="copyText('tCover',this)">Copy Cover Letter</button>
-          </div>
-
-          <div class="result-block">
-            <h4>🎤 Interview Prep</h4>
-            <div class="result-text" id="tInterviewPrep"></div>
-          </div>
-        </div>
-
-        <!-- Loading state for targeted -->
-        <div id="targetLoading" style="display:none;text-align:center;padding:48px 0;">
-          <div style="display:inline-block;width:40px;height:40px;border:3px solid var(--border);border-top-color:var(--blue);border-radius:50%;animation:spin 0.7s linear infinite;margin-bottom:16px;"></div>
-          <p style="color:var(--muted);font-size:0.88rem;font-weight:500;" id="targetLoadingText">Researching the company...</p>
-        </div>
-      </div>
-    </div>
 </div>
 
-<!-- PROFILE MODAL -->
-<div class="modal-overlay" id="profileModal" onclick="closeProfileOutside(event)">
+<!-- Profile Modal -->
+<div class="overlay" id="profileModal" onclick="closeProfileOutside(event)">
   <div class="modal">
     <button class="modal-close" onclick="closeProfile()">✕</button>
-    <div class="profile-avatar" id="profileAvatar">S</div>
+    <div class="modal-avatar" id="profileAvatar">S</div>
     <h2 id="profileName">Stefan</h2>
-    <p class="email" id="profileEmail">loading...</p>
-
-    <div class="plan-card" id="planCard">
-      <div class="plan-label">Current Plan</div>
+    <p class="modal-email" id="profileEmail">loading...</p>
+    <div class="plan-box">
+      <div class="plan-lbl">Current Plan</div>
       <div class="plan-name" id="planName">Free Plan</div>
-      <div class="plan-usage" id="planUsage">0 of 3 free optimizations used</div>
-      <div class="usage-bar"><div class="usage-fill" id="usageFill" style="width:0%"></div></div>
+      <div class="plan-usage" id="planUsage">0 of 3 free optimisations used</div>
+      <div class="usage-track"><div class="usage-fill" id="usageFill" style="width:0%"></div></div>
     </div>
-
-    <button class="upgrade-btn" onclick="startUpgrade()" id="upgradeBtn">
-      🚀 Upgrade to Pro — €9/month
-    </button>
+    <button class="upgrade-btn" onclick="startUpgrade()" id="upgradeBtn">🚀 Upgrade to Pro — €19/month</button>
     <button class="signout-btn" onclick="signOut()">Sign out</button>
-
-    <div class="divider-h"></div>
-    <p style="font-size:0.75rem;color:var(--muted2);text-align:center">ResumeAI · Built with AI · Made for job seekers</p>
+    <div class="modal-divider"></div>
+    <p style="font-size:11px;color:var(--muted);text-align:center;">ResumeAI · Made for job seekers</p>
   </div>
 </div>
 
 <script>
+
+  function copyActive() {
+    const activeTab = document.querySelector('.tab.on');
+    if (!activeTab) return;
+    const label = activeTab.textContent;
+    let id = 'optimizedResume';
+    if (label.includes('Cover')) id = 'coverLetter';
+    else if (label.includes('Tips')) id = 'tipsList';
+    const el = document.getElementById(id);
+    const text = el.innerText || el.textContent;
+    navigator.clipboard.writeText(text);
+    const btn = document.getElementById('copyBtn');
+    const orig = btn.textContent;
+    btn.textContent = '✓ Copied';
+    setTimeout(() => btn.textContent = orig, 2000);
+    // Update download button
+    const dlBtn = document.getElementById('dlBtn');
+    if (label.includes('Cover')) {
+      dlBtn.textContent = '⬇ Download Cover Letter (.docx)';
+      dlBtn.onclick = () => downloadDoc('cover');
+    } else {
+      dlBtn.textContent = '⬇ Download CV (.docx)';
+      dlBtn.onclick = () => downloadDoc('cv');
+    }
+  }
+
+
   const SUPABASE_URL = 'https://sdallvtnmcqwqdbsobyx.supabase.co';
   const SUPABASE_KEY = 'sb_publishable_tUx-2z7sl9E7W7C7L-EmTA_-PDESZpq';
   const { createClient } = supabase;
@@ -878,8 +1050,8 @@
   }
 
   function showLanding() {
-    document.getElementById('landing').classList.add('active');
-    document.getElementById('app').classList.remove('active');
+    document.getElementById('landing').classList.add('on');
+    document.getElementById('app').classList.remove('on');
     document.getElementById('modePill').style.display = 'none';
   }
 
@@ -902,8 +1074,8 @@
         showToast('✨ Upgrade to Pro to access Targeted Applications');
         return;
       }
-      document.getElementById('landing').classList.remove('active');
-      document.getElementById('app').classList.add('active');
+      document.getElementById('landing').classList.remove('on');
+      document.getElementById('app').classList.add('on');
       document.getElementById('modePill').style.display = 'flex';
       document.getElementById('modeLabel').textContent = 'Targeted';
       // Show targeted panel, hide standard panels
@@ -913,8 +1085,8 @@
       document.querySelector('.app-body').style.gridTemplateColumns = '1fr';
       return;
     }
-    document.getElementById('landing').classList.remove('active');
-    document.getElementById('app').classList.add('active');
+    document.getElementById('landing').classList.remove('on');
+    document.getElementById('app').classList.add('on');
     document.getElementById('modeLabel').textContent = mode === 'student' ? 'Student' : 'Professional';
     document.getElementById('modePill').style.display = 'flex';
     document.getElementById('targetedPanel').style.display = 'none';
@@ -924,8 +1096,8 @@
   }
 
   function selectTemplate(el, name) {
-    document.querySelectorAll('.tpl-card').forEach(c => c.classList.remove('selected'));
-    el.classList.add('selected');
+    document.querySelectorAll('.tpl-item').forEach(c => c.classList.remove('on'));
+    el.classList.add('on');
     currentTemplate = name;
     uploadedTemplateStyle = null;
     document.getElementById('uploadZone').classList.remove('has-file');
@@ -966,8 +1138,8 @@
     }
     document.getElementById('optimizeBtn').disabled = true;
     document.getElementById('emptyState').style.display = 'none';
-    document.getElementById('loadingState').style.display = 'flex';
-    document.getElementById('resultsContent').style.display = 'none';
+    document.getElementById('loadingState').style.display = 'flex'; document.getElementById('emptyState').style.display = 'none';
+    document.getElementById('resultsWrap').style.display = 'none';
     try {
       const res = await fetch('/optimize', {
         method:'POST',
@@ -985,7 +1157,7 @@
     } catch(err) {
       errorBox.textContent = 'Something went wrong: ' + err.message;
       errorBox.style.display = 'block';
-      document.getElementById('emptyState').style.display = 'flex';
+      document.getElementById('emptyState').style.display = 'flex'; document.getElementById('resultsWrap').classList.remove('show');
     } finally {
       document.getElementById('optimizeBtn').disabled = false;
       document.getElementById('loadingState').style.display = 'none';
@@ -1020,7 +1192,7 @@
 
     document.getElementById('keywordsWrap').innerHTML = keywords.split(',').map(k=>k.trim()).filter(Boolean).map(k=>`<span class="kw">${k}</span>`).join('');
     renderCVPreview(optimized);
-    document.getElementById('coverLetter').textContent = cover;
+    document.getElementById('coverLetter').innerHTML = cover.split('\n').map(l => l.trim() ? `<p style='margin-bottom:8px'>${l.trim()}</p>` : '<br/>').join('');
 
     const tipsArr = tips.split('\n').filter(t=>t.trim());
     document.getElementById('tipsList').innerHTML = tipsArr.map(t=>`<li>${t.replace(/^[-•*\d.]\s*/,'')}</li>`).join('');
@@ -1035,19 +1207,19 @@
       } catch(e) { console.log('Feedback parse error:', e); }
     }
 
-    document.getElementById('resultsContent').style.display = 'block';
+    document.getElementById('resultsWrap').style.display = 'block';
 
     // Reset to CV tab safely
     const tabPanes = document.querySelectorAll('.tab-pane');
-    const tabBtns = document.querySelectorAll('.result-tab');
+    const tabBtns = document.querySelectorAll('.tab');
     if (tabPanes.length) tabPanes.forEach(p => p.style.display = 'none');
-    if (tabBtns.length) tabBtns.forEach(b => b.classList.remove('active'));
+    if (tabBtns.length) tabBtns.forEach(b => b.classList.remove('on'));
     const cvTab = document.getElementById('tab-cv');
-    const firstBtn = document.querySelector('.result-tab');
+    const firstBtn = document.querySelector('.tab');
     if (cvTab) cvTab.style.display = 'block';
-    if (firstBtn) firstBtn.classList.add('active');
+    if (firstBtn) firstBtn.classList.add('on');
 
-    document.getElementById('resultsContent').scrollIntoView({behavior:'smooth'});
+    document.getElementById('resultsWrap').scrollIntoView({behavior:'smooth'});
   }
 
   function copyText(id, btn) {
@@ -1205,30 +1377,25 @@
 
   function renderFeedbackCards(cards) {
     if (!cards || !cards.length) return;
-    const container = document.getElementById('feedbackCards');
+    const container = document.getElementById('suggestGrid');
     const categoryIcons = { hobbies:'🎯', experience:'💼', skills:'⚡', education:'🎓', formatting:'📄', keywords:'🔑' };
     
     container.innerHTML = cards.map((card, i) => `
-      <div style="background:var(--bg2);border:2px solid var(--border);border-radius:12px;padding:16px;">
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
-          <span style="font-size:1.1rem;">${categoryIcons[card.category] || '💡'}</span>
-          <span style="font-size:0.75rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);">${card.category}</span>
+      <div class="suggest-card">
+        <div class="suggest-head">
+          <span class="suggest-icon">${categoryIcons[card.category] || '💡'}</span>
+          <span class="suggest-cat">${card.category}</span>
         </div>
-        <p style="font-size:0.85rem;color:var(--text);font-weight:600;margin-bottom:10px;">${card.issue}</p>
-        <div style="display:flex;flex-direction:column;gap:6px;">
+        <div class="suggest-issue">${card.issue}</div>
+        <div class="suggest-opts">
           ${card.options.map((opt, j) => `
-            <button onclick="applyFeedback(${i}, ${j})" 
-              style="text-align:left;padding:8px 12px;background:var(--surface);border:2px solid var(--border);border-radius:8px;cursor:pointer;font-size:0.8rem;font-family:'Plus Jakarta Sans',sans-serif;color:var(--text);transition:all 0.2s;"
-              onmouseover="this.style.borderColor='var(--blue)';this.style.color='var(--blue)'"
-              onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text)'">
-              ${opt}
-            </button>
+            <button class="suggest-opt" onclick="applyFeedback(${i}, ${j})">${opt}</button>
           `).join('')}
         </div>
       </div>
     `).join('');
     
-    document.getElementById('feedbackBlock').style.display = 'block';
+    document.getElementById('suggestBlock').style.display = 'block';
   }
 
   let feedbackData = [];
@@ -1287,18 +1454,64 @@
     const chips = document.getElementById('historyChips');
     bar.classList.add('visible');
     chips.innerHTML = optimizationHistory.map((e, i) =>
-      `<button class="history-chip ${i===0?'active':''}" onclick="loadHistory(${i})" title="${e.jobDesc}">${e.jobDesc}</button>`
+      `<button class="h-chip ${i===0?'on':''}" onclick="loadHistory(${i})" title="${e.jobDesc}">${e.jobDesc}</button>`
     ).join('');
   }
 
   function loadHistory(idx) {
     const entry = optimizationHistory[idx];
     if (!entry) return;
-    document.querySelectorAll('.history-chip').forEach((c,i) => c.classList.toggle('active', i===idx));
+    document.querySelectorAll('.h-chip').forEach((c,i) => c.classList.toggle('on', i===idx));
     parseAndDisplay(entry.result);
   }
 
   function renderCVPreview(text) {
+    const el = document.getElementById('optimizedResume');
+    const lines = text.split('\n');
+    let html = '';
+    let isFirst = true;
+    let isSecond = false;
+
+    lines.forEach((line) => {
+      const t = line.trim();
+      if (!t) { html += '<div class="cv-gap"></div>'; return; }
+
+      if (isFirst) {
+        html += `<div class="cv-name">${t}</div>`;
+        isFirst = false; isSecond = true; return;
+      }
+      if (isSecond && (t.includes('@') || t.includes('•') || t.includes('+'))) {
+        html += `<div class="cv-contact">${t}</div>`;
+        isSecond = false; return;
+      }
+      isSecond = false;
+
+      const sections = ['EDUCATION','WORK EXPERIENCE','EXPERIENCE','EXTRACURRICULAR','SKILLS','INTERESTS','ACTIVITIES','LANGUAGES','VOLUNTEERING'];
+      if (sections.some(s => t.toUpperCase().startsWith(s)) || (t === t.toUpperCase() && t.length > 3 && !t.startsWith('-') && /[A-Z]{3}/.test(t))) {
+        html += `<div class="cv-section">${t}</div>`; return;
+      }
+      if (t.startsWith('-') || t.startsWith('•')) {
+        html += `<div class="cv-bullet">${t.replace(/^[-•]\s*/,'')}</div>`; return;
+      }
+      const skillsM = t.match(/^(Languages|Skills|Interests|Certifications):\s*(.*)/i);
+      if (skillsM) {
+        html += `<div class="cv-skills"><strong>${skillsM[1]}:</strong> ${skillsM[2]}</div>`; return;
+      }
+      if (/\b(January|February|March|April|May|June|July|August|September|October|November|December|20\d{2}|Present)\b/i.test(t)) {
+        const parts = t.split(/\s{2,}/);
+        if (parts.length >= 2) {
+          html += `<div class="cv-entry"><span>${parts[0]}</span><span class="cv-entry-date">${parts.slice(1).join(' ')}</span></div>`; return;
+        }
+      }
+      if (t.toLowerCase().startsWith('course') || t.toLowerCase().startsWith('final') || t.toLowerCase().startsWith('gpa') || t.toLowerCase().startsWith('a-level') || t.toLowerCase().startsWith('bac')) {
+        html += `<div class="cv-sub">${t}</div>`; return;
+      }
+      html += `<div class="cv-plain">${t}</div>`;
+    });
+    el.innerHTML = html;
+    return; // prevent duplicate
+  }
+  function _old_renderCVPreview(text) {
     const el = document.getElementById('optimizedResume');
     const lines = text.split('\n');
     let html = '';
@@ -1349,16 +1562,17 @@
   function switchTab(tab, btn) {
     // Hide all panes
     document.querySelectorAll('.tab-pane').forEach(p => p.style.display = 'none');
-    document.querySelectorAll('.result-tab').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab').forEach(b => b.classList.remove('on'));
     // Show selected
     document.getElementById('tab-' + tab).style.display = 'block';
-    btn.classList.add('active');
+    btn.classList.add('on');
   }
 
   async function signOut() {
     await sb.auth.signOut();
     window.location.href = '/auth.html';
   }
+
 </script>
 </body>
 </html>
