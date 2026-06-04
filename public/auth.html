@@ -251,11 +251,11 @@
   }
 
   sb.auth.getSession().then(({ data }) => {
-    if (data.session) window.location.href = '/';
+    if (data.session) window.location.href = '/app';
   });
 
   sb.auth.onAuthStateChange((event, session) => {
-    if (event === 'SIGNED_IN' && session) window.location.href = '/';
+    if (event === 'SIGNED_IN' && session) window.location.href = '/app';
   });
 
   function toggleMode() {
