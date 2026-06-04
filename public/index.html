@@ -181,7 +181,7 @@
 
     .hero-sub {
       font-size: 17px; font-weight: 300; color: var(--muted);
-      line-height: 1.65; max-width: 400px; margin: 0 auto 44px;
+      line-height: 1.65; max-width: 440px; margin: 0 auto 36px;
       animation: rise .4s .08s ease both;
     }
 
@@ -193,12 +193,13 @@
 
     .path-card {
       background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--r);
-      padding: 28px 24px 22px;
+      border: 1.5px solid var(--border);
+      border-radius: 14px;
+      padding: 28px 24px 52px;
       cursor: pointer; text-align: left;
       transition: border-color .2s, box-shadow .2s, transform .2s;
       position: relative; overflow: hidden;
+      min-height: 200px;
     }
     .path-card:hover {
       border-color: var(--blue-bd);
@@ -206,21 +207,21 @@
       transform: translateY(-2px);
     }
     .path-card-icon {
-      width: 36px; height: 36px; border-radius: 8px;
+      width: 44px; height: 44px; border-radius: 10px;
       background: var(--bg2); border: 1px solid var(--border);
       display: flex; align-items:center; justify-content:center;
-      font-size: 18px; margin-bottom: 14px;
+      font-size: 22px; margin-bottom: 16px;
       transition: background .2s;
     }
     .path-card:hover .path-card-icon { background: var(--blue-bg); border-color: var(--blue-bd); }
     .path-card h3 {
-      font-size: 16px; font-weight: 600; color: var(--text);
-      margin-bottom: 5px;
+      font-size: 17px; font-weight: 600; color: var(--text);
+      margin-bottom: 8px; letter-spacing: -.01em;
     }
-    .path-card p { font-size: 14px; color: var(--muted); line-height: 1.5; margin-bottom: 14px; }
+    .path-card p { font-size: 14px; color: var(--muted); line-height: 1.6; margin-bottom: 16px; }
     .path-tags { display:flex; flex-wrap:wrap; gap:4px; }
     .path-tag {
-      font-size: 10px; padding: 2px 7px; border-radius: 4px;
+      font-size: 11px; padding: 3px 9px; border-radius: 5px;
       background: var(--bg2); border: 1px solid var(--border);
       color: var(--muted); font-weight: 500;
       transition: all .2s;
@@ -236,12 +237,10 @@
     /* PRO card spans full width */
     .path-card.pro-card {
       grid-column: 1 / -1;
-      display: flex; align-items: center; gap: 16px;
-      padding: 16px 20px;
+      padding: 28px 24px 52px;
+      min-height: auto;
     }
-    .path-card.pro-card .path-card-icon { margin-bottom: 0; flex-shrink: 0; }
-    .path-card.pro-card > div { flex: 1; }
-    .path-card.pro-card p { margin-bottom: 0; }
+    .path-card.pro-card .path-card-icon { margin-bottom: 14px; }
 
     .pro-badge {
       display: inline-flex; align-items: center; gap: 4px;
@@ -689,9 +688,13 @@
       </div>
       <div class="path-card pro-card" onclick="selectPath('targeted')">
         <div class="path-card-icon">🎯</div>
-        <div>
-          <h3 style="margin-bottom:3px;">Targeted Application <span class="pro-badge">PRO</span></h3>
-          <p>"Apply to JP Morgan Spring Week London" — AI researches the firm and builds your entire application.</p>
+        <h3 style="margin-bottom:6px;">Targeted Application <span class="pro-badge">PRO</span></h3>
+        <p>"Apply to JP Morgan Spring Week London" — AI researches the firm and builds your entire application from scratch.</p>
+        <div class="path-tags" style="margin-top:12px;">
+          <span class="path-tag">JP Morgan</span>
+          <span class="path-tag">Goldman Sachs</span>
+          <span class="path-tag">McKinsey</span>
+          <span class="path-tag">Google</span>
         </div>
         <span class="path-arrow">→</span>
       </div>
