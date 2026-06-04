@@ -273,8 +273,8 @@ app.post('/create-checkout', async (req, res) => {
         quantity: 1,
       }],
       metadata: { userId },
-      success_url: `${process.env.APP_URL}/?upgrade=success`,
-      cancel_url: `${process.env.APP_URL}/?upgrade=cancelled`,
+      success_url: `${process.env.APP_URL}/app?upgrade=success`,
+      cancel_url: `${process.env.APP_URL}/app?upgrade=cancelled`,
     });
     res.json({ url: session.url });
   } catch (error) {
