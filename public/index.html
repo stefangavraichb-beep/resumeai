@@ -58,7 +58,7 @@
       background: var(--bg);
       color: var(--text);
       font-family: 'DM Sans', sans-serif;
-      font-size: 14px;
+      font-size: 16px;
       line-height: 1.5;
       min-height: 100vh;
       -webkit-font-smoothing: antialiased;
@@ -75,9 +75,9 @@
 
     /* ─── NAV ─── */
     .nav {
-      height: 52px;
+      height: 60px;
       display: flex; align-items: center; justify-content: space-between;
-      padding: 0 24px;
+      padding: 0 32px;
       background: var(--surface);
       border-bottom: 1px solid var(--border);
       position: sticky; top: 0; z-index: 100;
@@ -86,7 +86,7 @@
     }
     .nav-brand {
       font-family: 'Instrument Serif', serif;
-      font-size: 22px;
+      font-size: 26px;
       color: var(--text);
       cursor: pointer;
       letter-spacing: -0.02em;
@@ -98,7 +98,7 @@
       width: 32px; height: 32px; border-radius: var(--r-sm);
       background: transparent; border: 1px solid var(--border);
       cursor: pointer; display: flex; align-items:center; justify-content:center;
-      font-size: 14px; color: var(--muted); transition: all .15s;
+      font-size: 16px; color: var(--muted); transition: all .15s;
     }
     .nav-icon-btn:hover { background:var(--bg2); border-color:var(--border2); color:var(--text); }
 
@@ -114,10 +114,10 @@
 
     .user-btn {
       display: flex; align-items: center; gap: 7px;
-      padding: 4px 10px 4px 5px;
+      padding: 6px 12px 6px 6px;
       background: var(--bg2); border: 1px solid var(--border);
       border-radius: var(--r-sm); cursor: pointer; transition: all .15s;
-      font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 500; color: var(--text2);
+      font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 500; color: var(--text2);
     }
     .user-btn:hover { border-color:var(--border2); background:var(--bg); }
     .user-avatar {
@@ -169,7 +169,7 @@
 
     .hero-title {
       font-family: 'Instrument Serif', serif;
-      font-size: clamp(3rem, 7vw, 5rem);
+      font-size: clamp(3.4rem, 7vw, 5.6rem);
       font-weight: 400;
       line-height: 1.0;
       letter-spacing: -.03em;
@@ -180,7 +180,7 @@
     .hero-title em { font-style: italic; color: var(--blue); }
 
     .hero-sub {
-      font-size: 15px; font-weight: 300; color: var(--muted);
+      font-size: 17px; font-weight: 300; color: var(--muted);
       line-height: 1.65; max-width: 400px; margin: 0 auto 44px;
       animation: rise .4s .08s ease both;
     }
@@ -195,7 +195,7 @@
       background: var(--surface);
       border: 1px solid var(--border);
       border-radius: var(--r);
-      padding: 22px 20px 18px;
+      padding: 28px 24px 22px;
       cursor: pointer; text-align: left;
       transition: border-color .2s, box-shadow .2s, transform .2s;
       position: relative; overflow: hidden;
@@ -214,10 +214,10 @@
     }
     .path-card:hover .path-card-icon { background: var(--blue-bg); border-color: var(--blue-bd); }
     .path-card h3 {
-      font-size: 14px; font-weight: 600; color: var(--text);
+      font-size: 16px; font-weight: 600; color: var(--text);
       margin-bottom: 5px;
     }
-    .path-card p { font-size: 12px; color: var(--muted); line-height: 1.5; margin-bottom: 14px; }
+    .path-card p { font-size: 14px; color: var(--muted); line-height: 1.5; margin-bottom: 14px; }
     .path-tags { display:flex; flex-wrap:wrap; gap:4px; }
     .path-tag {
       font-size: 10px; padding: 2px 7px; border-radius: 4px;
@@ -228,7 +228,7 @@
     .path-card:hover .path-tag { background:var(--blue-bg); border-color:var(--blue-bd); color:var(--blue); }
     .path-arrow {
       position: absolute; bottom: 18px; right: 18px;
-      font-size: 14px; color: var(--muted2);
+      font-size: 16px; color: var(--muted2);
       transition: all .2s;
     }
     .path-card:hover .path-arrow { color: var(--blue); transform: translateX(3px); }
@@ -258,8 +258,8 @@
     #app { flex-direction: column; }
     .app-layout {
       display: grid;
-      grid-template-columns: 340px 1fr;
-      height: calc(100vh - 52px);
+      grid-template-columns: 380px 1fr;
+      height: calc(100vh - 60px);
       overflow: hidden;
     }
 
@@ -273,7 +273,7 @@
     .left-scroll { flex: 1; overflow-y: auto; padding: 20px; }
 
     .section-label {
-      font-size: 10px; font-weight: 600; letter-spacing: .08em;
+      font-size: 12px; font-weight: 600; letter-spacing: .08em;
       text-transform: uppercase; color: var(--muted);
       margin-bottom: 8px; display: block;
     }
@@ -308,7 +308,7 @@
       width: 100%;
       background: var(--bg2); border: 1.5px solid var(--border);
       border-radius: var(--r-sm); color: var(--text);
-      padding: 10px 12px; font-size: 13px;
+      padding: 12px 14px; font-size: 15px;
       font-family: 'DM Sans', sans-serif; line-height: 1.55;
       resize: vertical; outline: none;
       transition: border-color .15s, background .15s;
@@ -369,7 +369,7 @@
       gap: 8px; color: var(--muted); text-align: center; padding: 40px;
     }
     .state-icon { font-size: 28px; opacity: .25; margin-bottom: 4px; }
-    .state-title { font-size: 14px; font-weight: 500; color: var(--text2); }
+    .state-title { font-size: 16px; font-weight: 500; color: var(--text2); }
     .state-sub { font-size: 12px; color: var(--muted); }
     .spinner {
       width: 32px; height: 32px;
@@ -387,7 +387,7 @@
 
     /* Score row */
     .score-row {
-      display: grid; grid-template-columns: 160px 1fr;
+      display: grid; grid-template-columns: 180px 1fr;
       gap: 12px; padding: 16px 20px; flex-shrink: 0;
     }
     .score-card, .kw-card {
@@ -395,27 +395,27 @@
       border-radius: var(--r); box-shadow: var(--shadow-s);
     }
     .score-card {
-      padding: 16px; display: flex; flex-direction: column;
+      padding: 20px; display: flex; flex-direction: column;
       align-items: center; justify-content: center; gap: 8px; text-align: center;
     }
-    .score-ring-wrap { position: relative; width: 68px; height: 68px; }
+    .score-ring-wrap { position: relative; width: 84px; height: 84px; }
     .score-ring-wrap svg { transform: rotate(-90deg); }
     .score-ring-wrap circle { fill: none; stroke-width: 5; }
     .score-bg-c { stroke: var(--border2); }
     .score-fill-c { stroke: var(--green); stroke-linecap: round; transition: stroke-dashoffset 1.2s cubic-bezier(.4,0,.2,1); }
     .score-fill-c.mid { stroke: #d97706; }
     .score-fill-c.low { stroke: var(--red); }
-    .score-num { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-family:'Instrument Serif',serif; font-size: 18px; font-weight:400; }
-    .score-lbl { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
-    .score-explain { font-size: 11px; color: var(--muted); line-height: 1.4; }
+    .score-num { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-family:'Instrument Serif',serif; font-size: 22px; font-weight:400; }
+    .score-lbl { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+    .score-explain { font-size: 12px; color: var(--muted); line-height: 1.4; }
 
     .kw-card { padding: 14px 16px; }
-    .card-label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin-bottom: 10px; }
+    .card-label { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin-bottom: 10px; }
     .kw-wrap { display: flex; flex-wrap: wrap; gap: 5px; }
     .kw-tag {
-      padding: 2px 8px; border-radius: 4px;
+      padding: 3px 10px; border-radius: 4px;
       background: #fef2f2; border: 1px solid #fecaca; color: var(--red);
-      font-size: 11px; font-weight: 500;
+      font-size: 12px; font-weight: 500;
     }
     [data-theme="dark"] .kw-tag { background: #2d1515; border-color: #5c2020; }
 
@@ -426,7 +426,7 @@
       background: var(--surface); flex-shrink: 0;
     }
     .tab {
-      padding: 10px 14px; font-size: 12px; font-weight: 500;
+      padding: 12px 18px; font-size: 14px; font-weight: 500;
       color: var(--muted); cursor: pointer; border: none;
       background: transparent; font-family: 'DM Sans', sans-serif;
       border-bottom: 2px solid transparent; margin-bottom: -1px;
@@ -445,9 +445,9 @@
     .cv-doc {
       background: var(--surface); border: 1px solid var(--border);
       border-radius: var(--r); box-shadow: var(--shadow-m);
-      padding: 36px 40px;
+      padding: 40px 48px;
       font-family: 'Times New Roman', Georgia, serif;
-      font-size: 13px; line-height: 1.65; color: var(--text);
+      font-size: 14px; line-height: 1.65; color: var(--text);
     }
     .cv-name { text-align:center; font-weight:700; font-size:18px; margin-bottom:3px; }
     .cv-contact { text-align:center; font-size:11px; color:var(--muted); margin-bottom:14px; }
@@ -477,8 +477,8 @@
       background: var(--surface); flex-shrink: 0;
     }
     .act-btn {
-      padding: 8px 16px; border-radius: var(--r-sm);
-      font-size: 12px; font-weight: 600; cursor: pointer;
+      padding: 10px 20px; border-radius: var(--r-sm);
+      font-size: 14px; font-weight: 600; cursor: pointer;
       font-family: 'DM Sans', sans-serif; transition: all .15s;
       border: 1.5px solid var(--border); background: var(--bg2); color: var(--text2);
     }
@@ -492,9 +492,9 @@
     /* Interview tips */
     .tips-list { display:flex; flex-direction:column; gap:8px; }
     .tip-item {
-      padding: 12px 14px; border-radius: var(--r-sm);
+      padding: 14px 16px; border-radius: var(--r-sm);
       background: var(--surface); border: 1px solid var(--border);
-      font-size: 13px; color: var(--text2); line-height: 1.55;
+      font-size: 15px; color: var(--text2); line-height: 1.55;
       display: flex; gap: 10px; box-shadow: var(--shadow-s);
     }
     .tip-arrow { color: var(--blue); font-weight:700; flex-shrink:0; margin-top:1px; }
@@ -520,31 +520,32 @@
 
     /* Targeted panel */
     #targetedPanel {
-      display: none; position: absolute; top: 52px; left: 0; right: 0; bottom: 0;
+      display: none; position: absolute; top: 60px; left: 0; right: 0; bottom: 0;
       overflow-y: auto; background: var(--bg); z-index: 10;
     }
     .targeted-inner { max-width: 680px; margin: 0 auto; padding: 32px 24px; }
     .targeted-title {
-      font-family: 'Instrument Serif', serif; font-size: 26px; font-weight:400;
+      font-family: 'Instrument Serif', serif; font-size: 32px; font-weight:400;
       letter-spacing:-.02em; margin-bottom:4px;
     }
-    .targeted-sub { font-size:13px; color:var(--muted); margin-bottom:28px; line-height:1.6; }
+    .targeted-sub { font-size:16px; color:var(--muted); margin-bottom:28px; line-height:1.6; }
     .targeted-input {
       width:100%; background:var(--surface); border:1.5px solid var(--border);
-      border-radius:var(--r-sm); color:var(--text); padding:11px 14px;
-      font-size:14px; outline:none; font-family:'DM Sans',sans-serif;
+      border-radius:var(--r-sm); color:var(--text); padding:14px 16px;
+      font-size:16px; outline:none; font-family:'DM Sans',sans-serif;
       transition:border .15s; margin-bottom:14px;
     }
     .targeted-input:focus { border-color:var(--blue-bd); }
     .targeted-input::placeholder { color:var(--muted2); }
     .targeted-btn {
-      width:100%; padding:12px; background:var(--blue); border:none;
+      width:100%; padding:15px; background:var(--blue); border:none;
       border-radius:var(--r-sm); color:#fff; font-size:13px; font-weight:600;
       cursor:pointer; font-family:'DM Sans',sans-serif; transition:all .15s;
       box-shadow:0 2px 8px rgba(26,86,219,.3);
     }
     .targeted-btn:hover { background:var(--blue-h); transform:translateY(-1px); }
     .targeted-btn:disabled { opacity:.5; cursor:not-allowed; transform:none; }
+    .targeted-btn { font-size:16px; }
 
     .t-result-block {
       background:var(--surface); border:1px solid var(--border);
@@ -589,7 +590,7 @@
       font-family:'Instrument Serif',serif; font-size:22px;
       margin-bottom:14px;
     }
-    .modal h2 { font-family:'Instrument Serif',serif; font-size:20px; font-weight:400; margin-bottom:2px; }
+    .modal h2 { font-family:'Instrument Serif',serif; font-size:24px; font-weight:400; margin-bottom:2px; }
     .modal-email { font-size:12px; color:var(--muted); margin-bottom:20px; }
 
     .plan-box {
@@ -597,13 +598,13 @@
       border-radius:var(--r-sm); padding:14px; margin-bottom:16px;
     }
     .plan-lbl { font-size:10px; font-weight:600; text-transform:uppercase; letter-spacing:.08em; color:var(--muted); margin-bottom:4px; }
-    .plan-name { font-size:14px; font-weight:600; color:var(--blue); margin-bottom:6px; }
-    .plan-usage { font-size:12px; color:var(--muted); margin-bottom:8px; }
+    .plan-name { font-size:16px; font-weight:600; color:var(--blue); margin-bottom:6px; }
+    .plan-usage { font-size:14px; color:var(--muted); margin-bottom:8px; }
     .usage-track { height:4px; background:var(--border); border-radius:999px; overflow:hidden; }
     .usage-fill { height:100%; background:var(--blue); border-radius:999px; transition:width .5s ease; }
 
     .upgrade-btn {
-      width:100%; padding:11px; background:var(--blue); border:none;
+      width:100%; padding:13px; background:var(--blue); border:none;
       border-radius:var(--r-sm); color:#fff; font-size:13px; font-weight:600;
       cursor:pointer; font-family:'DM Sans',sans-serif; transition:all .15s;
       box-shadow:0 1px 2px rgba(26,86,219,.25); margin-bottom:8px;
@@ -771,9 +772,9 @@
         <div class="score-row">
           <div class="score-card">
             <div class="score-ring-wrap">
-              <svg width="68" height="68" viewBox="0 0 68 68">
-                <circle class="score-bg-c" cx="34" cy="34" r="29"/>
-                <circle class="score-fill-c" id="scoreFill" cx="34" cy="34" r="29" stroke-dasharray="182.2" stroke-dashoffset="182.2"/>
+              <svg width="84" height="84" viewBox="0 0 84 84">
+                <circle class="score-bg-c" cx="42" cy="42" r="36"/>
+                <circle class="score-fill-c" id="scoreFill" cx="42" cy="42" r="36" stroke-dasharray="226.2" stroke-dashoffset="226.2"/>
               </svg>
               <div class="score-num" id="scoreNum">—</div>
             </div>
