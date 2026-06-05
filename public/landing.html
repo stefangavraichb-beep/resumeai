@@ -342,7 +342,7 @@
     <a href="#features">Features</a>
     <a href="#pricing">Pricing</a>
   </div>
-  <div class="nav-cta">
+  <div class="nav-cta" id="navCta">
     <a href="/auth.html" class="btn-ghost">Sign in</a>
     <a href="/auth.html" class="btn-primary">Get started free →</a>
   </div>
@@ -588,6 +588,17 @@
   <p>Built with AI · Made for job seekers</p>
 </footer>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+  // Check if already logged in - update nav
+  const { createClient } = supabase;
+  const _sb = createClient('https://sdallvtnmcqwqdbsobyx.supabase.co', 'sb_publishable_tUx-2z7sl9E7W7C7L-EmTA_-PDESZpq');
+  _sb.auth.getSession().then(({ data }) => {
+    if (data.session) {
+      document.getElementById('navCta').innerHTML = '<a href="/app" class="btn-primary">Go to app →</a>';
+    }
+  });
+</script>
 <script>
   // Navbar scroll effect
   const navbar = document.getElementById('navbar');
