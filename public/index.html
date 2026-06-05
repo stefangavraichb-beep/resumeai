@@ -260,6 +260,7 @@
       grid-template-columns: 420px 1fr;
       height: calc(100vh - 60px);
       overflow: hidden;
+      min-height: 0;
     }
 
     /* ─── LEFT PANEL ─── */
@@ -283,6 +284,7 @@
       gap: 0;
       border-bottom: 1px solid var(--border);
       flex-shrink: 0;
+      background: var(--surface);
     }
     .mode-btn {
       padding: 14px 8px;
@@ -365,13 +367,14 @@
     .right-panel {
       display: flex; flex-direction: column;
       overflow: hidden; background: var(--bg);
+      min-height: 0;
     }
 
     /* History bar */
     .history-bar {
-      padding: 8px 20px; border-bottom: 1px solid var(--border);
+      padding: 6px 16px; border-bottom: 1px solid var(--border);
       display: none; align-items: center; gap: 8px; flex-wrap: wrap;
-      background: var(--surface); flex-shrink: 0;
+      background: var(--bg2); flex-shrink: 0;
     }
     .history-bar.visible { display: flex; }
     .history-label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); flex-shrink: 0; }
@@ -405,6 +408,7 @@
     .results-wrap {
       flex: 1; overflow-y: auto; display: none;
       flex-direction: column;
+      min-height: 0;
     }
     .results-wrap.show { display: flex; }
 
@@ -459,7 +463,7 @@
     .tab.on { color: var(--blue); border-bottom-color: var(--blue); font-weight: 600; }
 
     /* Tab content */
-    .tab-body { flex: 1; overflow-y: auto; }
+    .tab-body { flex: 1; overflow-y: auto; min-height: 0; }
     .tab-pane { display: none; padding: 20px; animation: fadeIn .2s ease; }
     .tab-pane.on { display: block; }
     @keyframes fadeIn { from{opacity:0} to{opacity:1} }
@@ -750,18 +754,18 @@
 
         <div class="field-block">
           <span class="section-label">Your Resume</span>
-          <textarea id="resume" rows="13" placeholder="Paste your full resume here..."></textarea>
+          <textarea id="resume" rows="13" placeholder="Paste your current CV or resume here — any format works..."></textarea>
         </div>
 
         <div class="field-block">
           <span class="section-label">Job Description</span>
-          <textarea id="jobDesc" rows="8" placeholder="Paste the job description here..."></textarea>
+          <textarea id="jobDesc" rows="8" placeholder="Paste the full job description here..."></textarea>
         </div>
       </div>
 
       <div class="left-footer">
         <button class="opt-btn" id="optimizeBtn" onclick="optimize()">
-          <span class="opt-btn-icon">⚡</span> Optimise My Resume
+          <span class="opt-btn-icon">⚡</span> Optimise Resume
         </button>
         <div class="error-msg" id="errorBox"></div>
       </div>
@@ -799,7 +803,7 @@
             </div>
           </div>
         </div>
-        <div style="padding:16px 18px;background:linear-gradient(135deg,var(--blue-bg),#f0f4ff);border:1px solid var(--blue-bd);border-radius:10px;width:100%;max-width:480px;">
+        <div style="padding:16px 18px;background:linear-gradient(135deg,var(--blue-bg),#f0f4ff);border:1px solid var(--blue-bd);border-radius:10px;width:100%;max-width:440px;">
           <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
             <span style="font-size:14px;">🎯</span>
             <span style="font-size:13px;font-weight:700;color:var(--blue);">Pro: Targeted Applications</span>
@@ -811,7 +815,8 @@
       <!-- Loading state -->
       <div class="state-box" id="loadingState" style="display:none;">
         <div class="spinner"></div>
-        <div class="state-title" style="margin-top:14px;" id="loadMsg">Analysing your resume...</div>
+        <div class="state-title" style="margin-top:16px;font-size:15px;" id="loadMsg">Analysing your resume...</div>
+        <div class="state-sub" id="loadSub">This usually takes 10–20 seconds</div>
       </div>
 
       <!-- Results -->
@@ -820,7 +825,7 @@
         <!-- Score bar - full width, horizontal -->
         <div style="padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:20px;background:var(--surface);flex-shrink:0;">
           <div class="score-ring-wrap" style="width:68px;height:68px;flex-shrink:0;">
-            <svg width="68" height="68" viewBox="0 0 84 84">
+            <svg width="68" height="68" viewBox="0 0 84 84" style="overflow:visible;">
               <circle class="score-bg-c" cx="42" cy="42" r="36"/>
               <circle class="score-fill-c" id="scoreFill" cx="42" cy="42" r="36" stroke-dasharray="226.2" stroke-dashoffset="226.2"/>
             </svg>
@@ -1227,6 +1232,10 @@
     document.getElementById('optimizeBtn').disabled = true;
     document.getElementById('emptyState').style.display = 'none';
     document.getElementById('loadingState').style.display = 'flex'; document.getElementById('emptyState').style.display = 'none';
+    const loadMsgs = ['Analysing your resume...', 'Checking ATS compatibility...', 'Rewriting your CV...', 'Crafting your cover letter...', 'Almost done...'];
+    let loadIdx = 0;
+    const loadInterval = setInterval(() => { loadIdx = (loadIdx+1) % loadMsgs.length; const el = document.getElementById('loadMsg'); if(el) el.textContent = loadMsgs[loadIdx]; }, 3500);
+    window._loadInterval = loadInterval;
     document.getElementById('resultsWrap').style.display = 'none';
     try {
       const res = await fetch('/optimize', {
@@ -1249,6 +1258,7 @@
     } finally {
       document.getElementById('optimizeBtn').disabled = false;
       document.getElementById('loadingState').style.display = 'none';
+    if(window._loadInterval) { clearInterval(window._loadInterval); window._loadInterval = null; }
     }
   }
 
@@ -1264,7 +1274,8 @@
     const keywords = get('MISSING KEYWORDS','OPTIMIZED RESUME');
     const optimized = get('OPTIMIZED RESUME','COVER LETTER');
     const cover = get('COVER LETTER','INTERVIEW TIPS');
-    const tips = get('INTERVIEW TIPS', null);
+    const tips = get('INTERVIEW TIPS', 'FEEDBACK CARDS');
+    const feedbackRaw = get('FEEDBACK CARDS', null);
 
     const scoreMatch = atsRaw.match(/(\d+)/);
     const score = scoreMatch ? parseInt(scoreMatch[1]) : 0;
@@ -1286,7 +1297,6 @@
     document.getElementById('tipsList').innerHTML = tipsArr.map(t=>`<li>${t.replace(/^[-•*\d.]\s*/,'')}</li>`).join('');
 
     // Parse feedback cards
-    const feedbackRaw = get('FEEDBACK CARDS', null);
     if (feedbackRaw) {
       try {
         const cleanJson = feedbackRaw.replace(/```json|```/g, '').trim();
@@ -1384,12 +1394,21 @@
     document.getElementById('targetResults').style.display = 'none';
     document.getElementById('targetLoading').style.display = 'block';
 
-    // Cycle loading messages
+    const msgs = [
+      'Researching ' + target.split(' ').slice(0,2).join(' ') + '...',
+      'Finding what they look for...',
+      'Reading hiring criteria...',
+      'Building your tailored CV...',
+      'Writing your cover letter...',
+      'Preparing interview questions...',
+      'Almost done...'
+    ];
     let msgIdx = 0;
     const msgInterval = setInterval(() => {
-      msgIdx = (msgIdx + 1) % targetLoadingMsgs.length;
-      document.getElementById('targetLoadingText').textContent = targetLoadingMsgs[msgIdx];
-    }, 3000);
+      msgIdx = (msgIdx + 1) % msgs.length;
+      const el = document.getElementById('targetLoadingText');
+      if (el) el.textContent = msgs[msgIdx];
+    }, 4000);
 
     try {
       const res = await fetch('/targeted', {
@@ -1398,7 +1417,9 @@
         body: JSON.stringify({ resume, target })
       });
       const data = await res.json();
+      console.log('Targeted response:', data);
       if (data.error) throw new Error(data.error);
+      if (!data.result || data.result.length < 50) throw new Error('No content returned. Please try again.');
       parseTargeted(data.result);
     } catch(err) {
       errorEl.textContent = 'Something went wrong: ' + err.message;
@@ -1411,25 +1432,45 @@
   }
 
   function parseTargeted(text) {
-    const get = (marker, next) => {
-      const pattern = next
-        ? new RegExp('---' + marker + '---\\n([\\s\\S]*?)(?=\\n---' + next + '---)')
-        : new RegExp('---' + marker + '---\\n([\\s\\S]*)$');
-      const m = text.match(pattern);
-      return m ? m[1].trim() : '';
-    };
+    console.log('parseTargeted called, text length:', text.length);
+    console.log('Text preview:', text.substring(0, 300));
 
-    const research = get('RESEARCH SUMMARY', 'APPLICATION STRATEGY');
-    const strategy = get('APPLICATION STRATEGY', 'TAILORED CV');
-    const cv = get('TAILORED CV', 'COVER LETTER');
-    const cover = get('COVER LETTER', 'INTERVIEW PREP');
-    const prep = get('INTERVIEW PREP', null);
+    // Flexible parser - handles --- MARKER --- or ---MARKER---
+    function extract(marker, nextMarker) {
+      // Try multiple formats
+      const patterns = [
+        new RegExp('---\\s*' + marker + '\\s*---\\s*\\n([\\s\\S]*?)(?=\\n---\\s*' + (nextMarker || 'END_OF_TEXT_ZZZZZ') + '\\s*---)', 'i'),
+        new RegExp('---\\s*' + marker + '\\s*---\\s*\\n([\\s\\S]*?)$', 'i'),
+      ];
+      for (const p of patterns) {
+        const m = text.match(p);
+        if (m && m[1] && m[1].trim().length > 0) return m[1].trim();
+      }
+      return '';
+    }
 
-    document.getElementById('tResearch').textContent = research || 'Research completed.';
-    document.getElementById('tStrategy').textContent = strategy || '';
-    document.getElementById('tCV').textContent = cv || '';
-    document.getElementById('tCover').textContent = cover || '';
-    document.getElementById('tInterviewPrep').textContent = prep || '';
+    const research = extract('RESEARCH SUMMARY', 'APPLICATION STRATEGY');
+    const strategy = extract('APPLICATION STRATEGY', 'TAILORED CV');
+    const cv = extract('TAILORED CV', 'COVER LETTER');
+    const cover = extract('COVER LETTER', 'INTERVIEW PREP');
+    const prep = extract('INTERVIEW PREP', null);
+
+    console.log('Parsed - research:', research.length, 'strategy:', strategy.length, 'cv:', cv.length, 'cover:', cover.length, 'prep:', prep.length);
+
+    // If nothing parsed at all, show raw text
+    if (!research && !strategy && !cv && !cover && !prep) {
+      document.getElementById('tResearch').textContent = 'Research completed.';
+      document.getElementById('tStrategy').textContent = '';
+      document.getElementById('tCV').textContent = text; // Show raw in CV field
+      document.getElementById('tCover').textContent = '';
+      document.getElementById('tInterviewPrep').textContent = '';
+    } else {
+      document.getElementById('tResearch').textContent = research || 'Research completed.';
+      document.getElementById('tStrategy').textContent = strategy || '';
+      document.getElementById('tCV').textContent = cv || '';
+      document.getElementById('tCover').textContent = cover || '';
+      document.getElementById('tInterviewPrep').textContent = prep || '';
+    }
 
     document.getElementById('targetResults').style.display = 'block';
     document.getElementById('targetResults').scrollIntoView({ behavior: 'smooth' });
