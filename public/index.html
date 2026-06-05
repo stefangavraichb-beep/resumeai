@@ -912,28 +912,53 @@
         <p class="t-load-msg" id="targetLoadingText">Researching the company...</p>
       </div>
 
-      <div id="targetResults" style="display:none;">
-        <div class="t-result-block highlight">
-          <div class="t-block-label">🔍 Research Found</div>
-          <div class="t-block-text" id="tResearch"></div>
+      <div id="targetResults" style="display:none;margin-top:24px;">
+
+        <!-- Research + Strategy row -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
+          <div style="background:var(--blue-bg);border:1.5px solid var(--blue-bd);border-radius:12px;padding:18px;">
+            <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--blue);margin-bottom:10px;">🔍 Research Found</div>
+            <div id="tResearch" style="font-size:14px;color:var(--text2);line-height:1.7;"></div>
+          </div>
+          <div style="background:var(--surface);border:1.5px solid var(--border);border-radius:12px;padding:18px;">
+            <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:10px;">🧠 Strategy</div>
+            <div id="tStrategy" style="font-size:14px;color:var(--text2);line-height:1.7;"></div>
+          </div>
         </div>
-        <div class="t-result-block">
-          <div class="t-block-label">🧠 Application Strategy</div>
-          <div class="t-block-text" id="tStrategy"></div>
-        </div>
-        <div class="t-result-block">
-          <div class="t-block-label">📄 Tailored CV</div>
-          <div class="t-block-text" id="tCV"></div>
-          <button class="act-btn primary" style="margin-top:10px;" onclick="copyText('tCV',this)">Copy CV</button>
-        </div>
-        <div class="t-result-block">
-          <div class="t-block-label">✉️ Cover Letter</div>
-          <div class="t-block-text" id="tCover"></div>
-          <button class="act-btn" style="margin-top:10px;" onclick="copyText('tCover',this)">Copy Cover Letter</button>
-        </div>
-        <div class="t-result-block">
-          <div class="t-block-label">🎤 Interview Prep</div>
-          <div class="t-block-text" id="tInterviewPrep"></div>
+
+        <!-- Tabs for CV / Cover Letter / Interview Prep -->
+        <div style="background:var(--surface);border:1.5px solid var(--border);border-radius:12px;overflow:hidden;">
+
+          <!-- Tab bar -->
+          <div style="display:flex;border-bottom:1px solid var(--border);background:var(--bg2);">
+            <button class="t-tab on" onclick="switchTTab('cv',this)" style="flex:1;padding:13px;border:none;background:transparent;font-size:13px;font-weight:600;color:var(--blue);cursor:pointer;font-family:'DM Sans',sans-serif;border-bottom:2px solid var(--blue);margin-bottom:-1px;">📄 Tailored CV</button>
+            <button class="t-tab" onclick="switchTTab('cover',this)" style="flex:1;padding:13px;border:none;background:transparent;font-size:13px;font-weight:500;color:var(--muted);cursor:pointer;font-family:'DM Sans',sans-serif;border-bottom:2px solid transparent;margin-bottom:-1px;">✉️ Cover Letter</button>
+            <button class="t-tab" onclick="switchTTab('prep',this)" style="flex:1;padding:13px;border:none;background:transparent;font-size:13px;font-weight:500;color:var(--muted);cursor:pointer;font-family:'DM Sans',sans-serif;border-bottom:2px solid transparent;margin-bottom:-1px;">🎤 Interview Prep</button>
+          </div>
+
+          <!-- CV pane -->
+          <div id="t-pane-cv" style="padding:24px 28px;">
+            <div id="tCV" style="font-family:'Times New Roman',serif;font-size:13.5px;line-height:1.75;color:var(--text);white-space:pre-wrap;"></div>
+            <div style="display:flex;gap:8px;margin-top:16px;padding-top:16px;border-top:1px solid var(--border);">
+              <button class="act-btn primary" onclick="downloadTargetedCV()">⬇ Download CV (.docx)</button>
+              <button class="act-btn" onclick="copyText('tCV',this)">Copy Text</button>
+            </div>
+          </div>
+
+          <!-- Cover letter pane -->
+          <div id="t-pane-cover" style="display:none;padding:24px 28px;">
+            <div id="tCover" style="font-size:14px;line-height:1.8;color:var(--text);white-space:pre-wrap;"></div>
+            <div style="display:flex;gap:8px;margin-top:16px;padding-top:16px;border-top:1px solid var(--border);">
+              <button class="act-btn primary" onclick="downloadTargetedCover()">⬇ Download (.docx)</button>
+              <button class="act-btn" onclick="copyText('tCover',this)">Copy Text</button>
+            </div>
+          </div>
+
+          <!-- Interview prep pane -->
+          <div id="t-pane-prep" style="display:none;padding:24px 28px;">
+            <div id="tInterviewPrep" style="font-size:14px;line-height:1.85;color:var(--text2);white-space:pre-wrap;"></div>
+          </div>
+
         </div>
       </div>
     </div>
@@ -1769,6 +1794,56 @@
     btn.classList.add('on');
   }
 
+
+
+  function switchTTab(tab, btn) {
+    document.querySelectorAll('.t-tab').forEach(b => {
+      b.classList.remove('on');
+      b.style.color = 'var(--muted)';
+      b.style.fontWeight = '500';
+      b.style.borderBottom = '2px solid transparent';
+    });
+    btn.classList.add('on');
+    btn.style.color = 'var(--blue)';
+    btn.style.fontWeight = '600';
+    btn.style.borderBottom = '2px solid var(--blue)';
+    ['cv','cover','prep'].forEach(p => {
+      const el = document.getElementById('t-pane-' + p);
+      if (el) el.style.display = p === tab ? 'block' : 'none';
+    });
+  }
+
+  async function downloadTargetedCV() {
+    const text = document.getElementById('tCV').textContent;
+    if (!text.trim()) return;
+    try {
+      const res = await fetch('/download-cv', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ resumeText: text })
+      });
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = 'targeted-cv.docx'; a.click();
+      URL.revokeObjectURL(url);
+    } catch(e) { showToast('Download failed: ' + e.message); }
+  }
+
+  async function downloadTargetedCover() {
+    const text = document.getElementById('tCover').textContent;
+    if (!text.trim()) return;
+    try {
+      const res = await fetch('/download-cover', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ coverText: text })
+      });
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = 'targeted-cover-letter.docx'; a.click();
+      URL.revokeObjectURL(url);
+    } catch(e) { showToast('Download failed: ' + e.message); }
+  }
 
   function switchModalTab(tab, btn) {
     document.querySelectorAll('.modal-tab').forEach(b => b.classList.remove('on'));
