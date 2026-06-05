@@ -1513,52 +1513,42 @@
   }
 
   function parseTargeted(rawText) {
-    // Step 1: deduplicate - keep only first occurrence of each section
-    // The API sometimes returns repeated content; find first marker and cut
-    const markers = ['---RESEARCH SUMMARY---', '---APPLICATION STRATEGY---', '---TAILORED CV---', '---COVER LETTER---', '---INTERVIEW PREP---'];
-    
-    // Find the first occurrence of the first marker
-    let text = rawText;
-    const firstMarker = markers.find(m => text.includes(m));
-    if (firstMarker) {
-      const firstIdx = text.indexOf(firstMarker);
-      // Find second occurrence of the same marker (duplicate starts here)
-      const secondIdx = text.indexOf(firstMarker, firstIdx + firstMarker.length);
-      if (secondIdx > -1) {
-        // Cut at the second occurrence - everything after is a duplicate
-        text = text.substring(0, secondIdx).trim();
-      }
+    // Clean the text first - remove markdown formatting
+    let text = rawText
+      .replace(/\*\*/g, '')
+      .replace(/\*/g, '')
+      .replace(/^#{1,4} /gm, '')
+      .replace(/^---+$/gm, '')
+      .trim();
+
+    // Find each section - take ONLY the first occurrence
+    function extract(startMarker, endMarker) {
+      const startRx = new RegExp('---\\s*' + startMarker + '\\s*---', 'i');
+      const startMatch = text.match(startRx);
+      if (!startMatch) return '';
+      
+      const afterStart = text.substring(startMatch.index + startMatch[0].length).replace(/^\s*/, '');
+      
+      if (!endMarker) return afterStart.trim();
+      
+      const endRx = new RegExp('---\\s*' + endMarker + '\\s*---', 'i');
+      const endMatch = afterStart.match(endRx);
+      if (!endMatch) return afterStart.trim();
+      
+      return afterStart.substring(0, endMatch.index).trim();
     }
 
-    // Step 2: flexible extract between markers
-    function extract(marker, nextMarker) {
-      const escaped = marker.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-      const patterns = nextMarker ? [
-        new RegExp('---\\s*' + escaped + '\\s*---\\s*\\n([\\s\\S]*?)(?=\\n---\\s*' + nextMarker.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\s*---)', 'i'),
-      ] : [
-        new RegExp('---\\s*' + escaped + '\\s*---\\s*\\n([\\s\\S]*)$', 'i'),
-      ];
-      for (const p of patterns) {
-        const m = text.match(p);
-        if (m && m[1] && m[1].trim().length > 5) return m[1].trim();
-      }
-      return '';
-    }
+    const research  = extract('RESEARCH SUMMARY',    'APPLICATION STRATEGY');
+    const strategy  = extract('APPLICATION STRATEGY', 'TAILORED CV');
+    const cv        = extract('TAILORED CV',          'COVER LETTER');
+    const cover     = extract('COVER LETTER',         'INTERVIEW PREP');
+    const prep      = extract('INTERVIEW PREP',       null);
 
-    const research = extract('RESEARCH SUMMARY', 'APPLICATION STRATEGY');
-    const strategy = extract('APPLICATION STRATEGY', 'TAILORED CV');
-    const cv = extract('TAILORED CV', 'COVER LETTER');
-    const cover = extract('COVER LETTER', 'INTERVIEW PREP');
-    const prep = extract('INTERVIEW PREP', null);
-
-    // Step 3: render — clean markdown from display text
-    function clean(t) { return t.replace(/\*\*/g, '').replace(/\*/g, '').replace(/^---+$/gm, '').replace(/^#{1,3} /gm, '').trim(); }
-
-    document.getElementById('tResearch').textContent = clean(research) || 'Research completed.';
-    document.getElementById('tStrategy').textContent = clean(strategy) || '';
-    document.getElementById('tCV').textContent = clean(cv) || '';
-    document.getElementById('tCover').textContent = clean(cover) || '';
-    document.getElementById('tInterviewPrep').textContent = clean(prep) || '';
+    document.getElementById('tResearch').textContent      = research  || 'Research completed.';
+    document.getElementById('tStrategy').textContent      = strategy  || '';
+    document.getElementById('tCV').textContent            = cv        || '';
+    document.getElementById('tCover').textContent         = cover     || '';
+    document.getElementById('tInterviewPrep').textContent = prep      || '';
 
     document.getElementById('targetResults').style.display = 'block';
     document.getElementById('targetResults').scrollIntoView({ behavior: 'smooth' });
