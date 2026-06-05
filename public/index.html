@@ -937,11 +937,11 @@
           </div>
 
           <!-- CV pane -->
-          <div id="t-pane-cv" style="padding:24px 28px;">
-            <div id="tCV" style="font-family:'Times New Roman',serif;font-size:13.5px;line-height:1.75;color:var(--text);white-space:pre-wrap;"></div>
-            <div style="display:flex;gap:8px;margin-top:16px;padding-top:16px;border-top:1px solid var(--border);">
+          <div id="t-pane-cv" style="padding:24px 28px;background:var(--bg2);">
+            <div style="background:#fff;border:1px solid var(--border);border-radius:10px;padding:40px 44px;box-shadow:0 4px 16px rgba(0,0,0,.08);font-family:'Times New Roman',serif;max-width:680px;margin:0 auto;" id="tCV"></div>
+            <div style="display:flex;gap:8px;margin-top:16px;max-width:680px;margin-left:auto;margin-right:auto;">
               <button class="act-btn primary" onclick="downloadTargetedCV()">⬇ Download CV (.docx)</button>
-              <button class="act-btn" onclick="copyText('tCV',this)">Copy Text</button>
+              <button class="act-btn" onclick="copyRawCV()">Copy Text</button>
             </div>
           </div>
 
@@ -1072,13 +1072,11 @@
         return;
       }
       document.getElementById('targetedPanel').style.display = 'block';
-      document.querySelector('.left-scroll').style.display = 'none';
-      document.querySelector('.left-footer').style.display = 'none';
+      document.querySelector('.left-panel').style.display = 'none';
       document.querySelector('.right-panel').style.display = 'none';
     } else {
       document.getElementById('targetedPanel').style.display = 'none';
-      document.querySelector('.left-scroll').style.display = 'block';
-      document.querySelector('.left-footer').style.display = 'block';
+      document.querySelector('.left-panel').style.display = 'flex';
       document.querySelector('.right-panel').style.display = 'flex';
     }
   }
@@ -1565,7 +1563,10 @@
 
     document.getElementById('tResearch').textContent      = research  || 'Research completed.';
     document.getElementById('tStrategy').textContent      = strategy  || '';
-    document.getElementById('tCV').textContent            = cv        || '';
+    // Store raw CV text for copying/downloading
+    window._targetedCVRaw = cv || '';
+    // Render as styled document
+    renderTargetedCV(cv || '');
     document.getElementById('tCover').textContent         = cover     || '';
     document.getElementById('tInterviewPrep').textContent = prep      || '';
 
@@ -1795,6 +1796,56 @@
   }
 
 
+
+
+  function renderTargetedCV(text) {
+    const el = document.getElementById('tCV');
+    if (!text) { el.innerHTML = ''; return; }
+    const lines = text.split('\n');
+    let html = '';
+    let isFirst = true, isSecond = false;
+    lines.forEach(line => {
+      const t = line.trim();
+      if (!t) { html += '<div style="height:8px"></div>'; return; }
+      if (isFirst) {
+        html += `<div style="text-align:center;font-weight:700;font-size:18px;margin-bottom:3px;letter-spacing:-.01em;">${t}</div>`;
+        isFirst = false; isSecond = true; return;
+      }
+      if (isSecond && (t.includes('@') || t.includes('|') || t.includes('•') || t.includes('+'))) {
+        html += `<div style="text-align:center;font-size:12px;color:#6b7280;margin-bottom:14px;">${t}</div>`;
+        isSecond = false; return;
+      }
+      isSecond = false;
+      const sections = ['EDUCATION','WORK EXPERIENCE','EXPERIENCE','EXTRACURRICULAR','SKILLS','INTERESTS','ACTIVITIES','LANGUAGES','SKILLS AND INTERESTS'];
+      if (sections.some(s => t.toUpperCase().startsWith(s)) || (t === t.toUpperCase() && t.length > 3 && !t.startsWith('-') && /[A-Z]{3}/.test(t))) {
+        html += `<div style="font-weight:700;font-size:12px;border-bottom:1.5px solid #111;padding-bottom:2px;margin:14px 0 6px;text-transform:uppercase;letter-spacing:.04em;">${t}</div>`;
+        return;
+      }
+      if (t.startsWith('-') || t.startsWith('•')) {
+        html += `<div style="padding-left:14px;font-size:12px;color:#374151;line-height:1.65;margin-top:2px;position:relative;"><span style="position:absolute;left:0;">-</span>${t.replace(/^[-•]\s*/,'')}</div>`;
+        return;
+      }
+      const skillM = t.match(/^(Languages|Skills|Interests|Technical|Finance):\s*(.*)/i);
+      if (skillM) {
+        html += `<div style="font-size:12px;line-height:1.65;"><strong>${skillM[1]}:</strong> ${skillM[2]}</div>`;
+        return;
+      }
+      if (/\b(January|February|March|April|May|June|July|August|September|October|November|December|20\d{2}|Present)\b/i.test(t)) {
+        const parts = t.split(/\s{2,}/);
+        if (parts.length >= 2) {
+          html += `<div style="display:flex;justify-content:space-between;align-items:baseline;font-weight:600;font-size:12.5px;margin-top:8px;"><span>${parts[0]}</span><span style="font-weight:400;font-style:italic;font-size:11.5px;color:#6b7280;">${parts.slice(1).join(' ')}</span></div>`;
+          return;
+        }
+      }
+      html += `<div style="font-size:12px;color:#374151;line-height:1.6;">${t}</div>`;
+    });
+    el.innerHTML = html;
+  }
+
+  function copyRawCV() {
+    navigator.clipboard.writeText(window._targetedCVRaw || document.getElementById('tCV').innerText);
+    showToast('✓ CV copied');
+  }
 
   function switchTTab(tab, btn) {
     document.querySelectorAll('.t-tab').forEach(b => {
