@@ -1225,16 +1225,7 @@
 
 
     function goHome() {
-    document.getElementById('app').classList.remove('active');
-    document.getElementById('landing').classList.add('active');
-    document.getElementById('targetedPanel').style.display = 'none';
-    document.querySelector('.left-scroll').style.display = 'block';
-    document.querySelector('.left-footer').style.display = 'block';
-    document.querySelector('.right-panel').style.display = 'flex';
-    // Reset mode to student
-    document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('on'));
-    document.getElementById('modeBtn-student').classList.add('on');
-    currentMode = 'student';
+    window.location.href = '/';
   }
 
   function selectPath(mode) {
