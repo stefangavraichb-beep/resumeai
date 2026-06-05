@@ -989,7 +989,7 @@
       </div>
 
       <div id="freeActions">
-        <button class="upgrade-btn" onclick="startUpgrade()" id="upgradeBtn">🚀 Upgrade to Pro — €19/month</button>
+        <button class="upgrade-btn" onclick="startUpgrade()" id="upgradeBtn">🚀 Upgrade to Pro — €9/month</button>
         <p style="font-size:12px;color:var(--muted);text-align:center;margin-top:8px;">Unlimited optimisations + Targeted Applications</p>
       </div>
 
@@ -1448,7 +1448,7 @@
         throw new Error(data.error || 'Failed to create checkout');
       }
     } catch(err) {
-      btn.textContent = '🚀 Upgrade to Pro — €19/month';
+      btn.textContent = '🚀 Upgrade to Pro — €9/month';
       btn.disabled = false;
       alert('Something went wrong: ' + err.message);
     }
