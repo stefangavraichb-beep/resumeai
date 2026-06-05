@@ -685,7 +685,7 @@
 
 <!-- NAV -->
 <nav class="nav" id="mainNav" style="display:none;">
-  <div class="nav-brand" onclick="window.location.href='/'">ResumeAI</div>
+  <div class="nav-brand" onclick="goHome()">ResumeAI</div>
   <div class="nav-right">
     <button class="nav-icon-btn" onclick="toggleTheme()" id="themeBtn" title="Toggle theme">☀️</button>
     <div class="mode-tag" id="modePill" style="display:none;">
@@ -1245,7 +1245,10 @@
       const isPro = localStorage.getItem('isPro_' + (currentUser?.id || '')) === 'true';
       if (!isPro) {
         openProfile();
-        showToast('✨ Upgrade to Pro to access Targeted Applications');
+        setTimeout(() => {
+          const planBtn = document.querySelector('.modal-tab:nth-child(2)');
+          if (planBtn) switchModalTab('plan', planBtn);
+        }, 50);
         return;
       }
       document.getElementById('landing').classList.remove('active');
