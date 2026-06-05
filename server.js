@@ -177,20 +177,15 @@ app.post('/targeted', async (req, res) => {
     let iter = 0;
     while (response.stop_reason === 'tool_use' && iter < 8) {
       iter++;
-      // Append assistant turn
       messages.push({ role: 'assistant', content: response.content });
-
-      // Build tool results
       const toolResults = response.content
         .filter(b => b.type === 'tool_use')
         .map(b => ({
           type: 'tool_result',
           tool_use_id: b.id,
-          content: b.type === 'tool_use' ? `Search for "${JSON.stringify(b.input)}" completed.` : ''
+          content: `Search completed for: ${JSON.stringify(b.input)}`
         }));
-
       messages.push({ role: 'user', content: toolResults });
-
       response = await client.messages.create({
         model: 'claude-sonnet-4-6',
         max_tokens: 8000,
@@ -200,24 +195,30 @@ app.post('/targeted', async (req, res) => {
       });
     }
 
-    // Extract all text
+    // ONLY take text from the FINAL response - never from intermediate messages
     let fullText = response.content
       .filter(b => b.type === 'text')
       .map(b => b.text)
-      .join('\n');
+      .join('\n')
+      .trim();
 
     console.log(`Targeted done. Iterations: ${iter}, Text: ${fullText.length} chars`);
+    console.log('First 200 chars:', fullText.substring(0, 200));
 
-    // Fallback: if text is too short, run without web search
-    if (fullText.trim().length < 200) {
-      console.log('Web search produced no content, using knowledge fallback');
+    // Fallback if no content
+    if (fullText.length < 200) {
+      console.log('Falling back to knowledge-based (no web search)');
       const fallback = await client.messages.create({
         model: 'claude-sonnet-4-6',
         max_tokens: 8000,
         system: TARGETED_SYSTEM,
         messages: [{ role: 'user', content: buildTargetedPrompt(resume, target) }]
       });
-      fullText = fallback.content.filter(b => b.type === 'text').map(b => b.text).join('\n');
+      fullText = fallback.content
+        .filter(b => b.type === 'text')
+        .map(b => b.text)
+        .join('\n')
+        .trim();
     }
 
     if (!fullText.trim()) return res.status(500).json({ error: 'No content generated. Please try again.' });
