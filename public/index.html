@@ -1785,6 +1785,68 @@
     btn.classList.add('on');
   }
 
+
+  function switchModalTab(tab, btn) {
+    document.querySelectorAll('.modal-tab').forEach(b => b.classList.remove('on'));
+    document.querySelectorAll('.modal-tab-pane').forEach(p => { p.classList.remove('on'); p.style.display = 'none'; });
+    btn.classList.add('on');
+    const pane = document.getElementById('modal-tab-' + tab);
+    if (pane) { pane.classList.add('on'); pane.style.display = 'block'; }
+  }
+
+  async function updateName() {
+    const nameEl = document.getElementById('settingsName');
+    if (!nameEl) return;
+    const name = nameEl.value.trim();
+    if (!name) return showToast('Please enter a name');
+    try {
+      await sb.auth.updateUser({ data: { full_name: name } });
+      document.getElementById('profileName').textContent = name;
+      document.getElementById('navEmail').textContent = name;
+      document.getElementById('navAvatar').textContent = name.charAt(0).toUpperCase();
+      document.getElementById('profileAvatar').textContent = name.charAt(0).toUpperCase();
+      showToast('✓ Name updated successfully');
+    } catch(e) { showToast('Failed to update: ' + e.message); }
+  }
+
+  async function updatePassword() {
+    const pw = document.getElementById('newPassword').value;
+    const confirm = document.getElementById('confirmPassword').value;
+    const msg = document.getElementById('passwordMsg');
+    if (!pw || pw.length < 6) {
+      msg.textContent = 'Password must be at least 6 characters.';
+      msg.style.color = 'var(--red)'; msg.style.display = 'block'; return;
+    }
+    if (pw !== confirm) {
+      msg.textContent = 'Passwords do not match.';
+      msg.style.color = 'var(--red)'; msg.style.display = 'block'; return;
+    }
+    try {
+      await sb.auth.updateUser({ password: pw });
+      msg.textContent = '✓ Password updated successfully.';
+      msg.style.color = 'var(--green)'; msg.style.display = 'block';
+      document.getElementById('newPassword').value = '';
+      document.getElementById('confirmPassword').value = '';
+    } catch(e) {
+      msg.textContent = 'Failed: ' + e.message;
+      msg.style.color = 'var(--red)'; msg.style.display = 'block';
+    }
+  }
+
+  async function deleteAccount() {
+    if (!confirm('Are you sure? This permanently deletes your account and all data. This cannot be undone.')) return;
+    try {
+      await sb.auth.signOut();
+      showToast('Account deleted. Goodbye!');
+      setTimeout(() => window.location.href = '/auth.html', 2000);
+    } catch(e) { showToast('Failed: ' + e.message); }
+  }
+
+  function manageSubscription() {
+    if (!confirm('To cancel your Pro subscription, you will need to do so via the billing portal. Continue?')) return;
+    showToast('Please email support@resumeai.today to cancel your subscription.');
+  }
+
   async function signOut() {
     await sb.auth.signOut();
     window.location.href = '/auth.html';
