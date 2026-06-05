@@ -613,6 +613,17 @@
       font-size:13px; color:var(--muted); transition:all .15s;
     }
     .modal-close:hover { background:var(--border); color:var(--text); }
+
+    .modal-tab {
+      flex:1; padding:12px 8px; border:none; background:transparent;
+      font-size:13px; font-weight:500; color:var(--muted); cursor:pointer;
+      font-family:'DM Sans',sans-serif; border-bottom:2px solid transparent;
+      margin-bottom:-1px; transition:all .15s;
+    }
+    .modal-tab:hover { color:var(--text); }
+    .modal-tab.on { color:var(--blue); border-bottom-color:var(--blue); font-weight:600; background:var(--surface); }
+    .modal-tab-pane { display:none; }
+    .modal-tab-pane.on { display:block; }
     .modal-avatar {
       width:52px; height:52px; border-radius:10px;
       background:var(--blue); color:#fff;
@@ -931,21 +942,86 @@
 
 <!-- Profile Modal -->
 <div class="overlay" id="profileModal" onclick="closeProfileOutside(event)">
-  <div class="modal">
-    <button class="modal-close" onclick="closeProfile()">✕</button>
-    <div class="modal-avatar" id="profileAvatar">S</div>
-    <h2 id="profileName">Stefan</h2>
-    <p class="modal-email" id="profileEmail">loading...</p>
-    <div class="plan-box">
-      <div class="plan-lbl">Current Plan</div>
-      <div class="plan-name" id="planName">Free Plan</div>
-      <div class="plan-usage" id="planUsage">0 of 3 free optimisations used</div>
-      <div class="usage-track"><div class="usage-fill" id="usageFill" style="width:0%"></div></div>
+  <div class="modal" style="max-width:460px;padding:0;overflow:hidden;">
+    <button class="modal-close" onclick="closeProfile()" style="top:14px;right:14px;z-index:10;">✕</button>
+
+    <!-- Modal tabs -->
+    <div style="display:flex;border-bottom:1px solid var(--border);background:var(--bg2);">
+      <button class="modal-tab on" onclick="switchModalTab('account',this)">Account</button>
+      <button class="modal-tab" onclick="switchModalTab('plan',this)">Plan</button>
+      <button class="modal-tab" onclick="switchModalTab('security',this)">Security</button>
     </div>
-    <button class="upgrade-btn" onclick="startUpgrade()" id="upgradeBtn">🚀 Upgrade to Pro — €19/month</button>
-    <button class="signout-btn" onclick="signOut()">Sign out</button>
-    <div class="modal-divider"></div>
-    <p style="font-size:11px;color:var(--muted);text-align:center;">ResumeAI · Made for job seekers</p>
+
+    <!-- Account tab -->
+    <div class="modal-tab-pane on" id="modal-tab-account" style="padding:28px;">
+      <div style="display:flex;align-items:center;gap:14px;margin-bottom:24px;">
+        <div class="modal-avatar" id="profileAvatar">S</div>
+        <div>
+          <h2 id="profileName" style="font-size:18px;margin-bottom:2px;">Stefan</h2>
+          <p class="modal-email" id="profileEmail" style="margin-bottom:0;">loading...</p>
+        </div>
+      </div>
+
+      <div style="margin-bottom:14px;">
+        <label style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);display:block;margin-bottom:6px;">Display Name</label>
+        <div style="display:flex;gap:8px;">
+          <input type="text" id="settingsName" placeholder="Your name" style="flex:1;background:var(--bg2);border:1.5px solid var(--border);border-radius:var(--r-sm);color:var(--text);padding:9px 12px;font-size:13px;outline:none;font-family:'DM Sans',sans-serif;" onfocus="this.style.borderColor='var(--blue-bd)'" onblur="this.style.borderColor='var(--border)'"/>
+          <button onclick="updateName()" style="padding:9px 14px;background:var(--blue);border:none;border-radius:var(--r-sm);color:#fff;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;white-space:nowrap;">Save</button>
+        </div>
+      </div>
+
+      <div style="margin-bottom:24px;">
+        <label style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);display:block;margin-bottom:6px;">Email</label>
+        <input type="text" id="settingsEmail" disabled style="width:100%;background:var(--bg2);border:1.5px solid var(--border);border-radius:var(--r-sm);color:var(--muted);padding:9px 12px;font-size:13px;font-family:'DM Sans',sans-serif;"/>
+      </div>
+
+      <div class="modal-divider"></div>
+      <button class="signout-btn" onclick="signOut()">Sign out of ResumeAI</button>
+    </div>
+
+    <!-- Plan tab -->
+    <div class="modal-tab-pane" id="modal-tab-plan" style="padding:28px;display:none;">
+      <div class="plan-box" style="margin-bottom:16px;">
+        <div class="plan-lbl">Current Plan</div>
+        <div class="plan-name" id="planName">Free Plan</div>
+        <div class="plan-usage" id="planUsage">0 of 3 free optimisations used</div>
+        <div class="usage-track"><div class="usage-fill" id="usageFill" style="width:0%"></div></div>
+      </div>
+
+      <div id="freeActions">
+        <button class="upgrade-btn" onclick="startUpgrade()" id="upgradeBtn">🚀 Upgrade to Pro — €19/month</button>
+        <p style="font-size:12px;color:var(--muted);text-align:center;margin-top:8px;">Unlimited optimisations + Targeted Applications</p>
+      </div>
+
+      <div id="proActions" style="display:none;">
+        <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:var(--r-sm);padding:14px;margin-bottom:14px;display:flex;gap:10px;align-items:center;">
+          <span style="font-size:18px;">✅</span>
+          <div><div style="font-size:13px;font-weight:700;color:#15803d;">Pro Plan Active</div><div style="font-size:12px;color:#16a34a;">Unlimited optimisations · Targeted Applications</div></div>
+        </div>
+        <button onclick="manageSubscription()" style="width:100%;padding:11px;background:transparent;border:1.5px solid var(--border);border-radius:var(--r-sm);color:var(--text2);font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;margin-bottom:8px;transition:all .15s;" onmouseover="this.style.borderColor='var(--red)';this.style.color='var(--red)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text2)'">Cancel Subscription</button>
+        <p style="font-size:11px;color:var(--muted);text-align:center;">You'll keep Pro access until the end of your billing period.</p>
+      </div>
+    </div>
+
+    <!-- Security tab -->
+    <div class="modal-tab-pane" id="modal-tab-security" style="padding:28px;display:none;">
+      <div style="margin-bottom:20px;">
+        <label style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);display:block;margin-bottom:6px;">New Password</label>
+        <input type="password" id="newPassword" placeholder="Min. 6 characters" style="width:100%;background:var(--bg2);border:1.5px solid var(--border);border-radius:var(--r-sm);color:var(--text);padding:9px 12px;font-size:13px;outline:none;font-family:'DM Sans',sans-serif;margin-bottom:8px;" onfocus="this.style.borderColor='var(--blue-bd)'" onblur="this.style.borderColor='var(--border)'"/>
+        <input type="password" id="confirmPassword" placeholder="Confirm new password" style="width:100%;background:var(--bg2);border:1.5px solid var(--border);border-radius:var(--r-sm);color:var(--text);padding:9px 12px;font-size:13px;outline:none;font-family:'DM Sans',sans-serif;" onfocus="this.style.borderColor='var(--blue-bd)'" onblur="this.style.borderColor='var(--border)'"/>
+        <button onclick="updatePassword()" style="width:100%;margin-top:10px;padding:10px;background:var(--blue);border:none;border-radius:var(--r-sm);color:#fff;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;">Update Password</button>
+        <div id="passwordMsg" style="font-size:12px;margin-top:8px;display:none;text-align:center;"></div>
+      </div>
+
+      <div class="modal-divider"></div>
+
+      <div>
+        <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:4px;">Delete Account</div>
+        <p style="font-size:12px;color:var(--muted);margin-bottom:10px;line-height:1.5;">Permanently delete your account and all data. This cannot be undone.</p>
+        <button onclick="deleteAccount()" style="width:100%;padding:10px;background:transparent;border:1.5px solid #fecaca;color:var(--red);border-radius:var(--r-sm);font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .15s;" onmouseover="this.style.background='#fef2f2'" onmouseout="this.style.background='transparent'">Delete My Account</button>
+      </div>
+    </div>
+
   </div>
 </div>
 
@@ -1060,6 +1136,11 @@
     document.getElementById('profileAvatar').textContent = initials;
     document.getElementById('profileName').textContent = name;
     document.getElementById('profileEmail').textContent = email;
+    // Populate settings fields
+    const nameField = document.getElementById('settingsName');
+    const emailField = document.getElementById('settingsEmail');
+    if (nameField) nameField.value = name;
+    if (emailField) emailField.value = email;
     document.getElementById('mainNav').style.display = 'flex';
 
     usageCount = parseInt(localStorage.getItem('usage_' + currentUser.id) || '0');
