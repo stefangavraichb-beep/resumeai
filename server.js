@@ -7,6 +7,23 @@ const Stripe = require('stripe');
 const { parseResumeToDocx, parseCoverLetterToDocx } = require('./generate_docx');
 require('dotenv').config();
 
+// Simple in-memory rate limiter
+const rateLimits = new Map();
+function rateLimit(maxReqs, windowMs) {
+  return (req, res, next) => {
+    const key = req.ip || 'unknown';
+    const now = Date.now();
+    const entry = rateLimits.get(key) || { count: 0, resetAt: now + windowMs };
+    if (now > entry.resetAt) { entry.count = 0; entry.resetAt = now + windowMs; }
+    entry.count++;
+    rateLimits.set(key, entry);
+    if (entry.count > maxReqs) {
+      return res.status(429).json({ error: 'Too many requests. Please wait a moment.' });
+    }
+    next();
+  };
+}
+
 const app = express();
 const upload = multer({ dest: 'uploads/' });
 const stripe = Stripe(process.env.STRIPE_SECRET_KEY);
@@ -16,11 +33,56 @@ app.use(cors());
 app.use('/webhook', express.raw({ type: 'application/json' }));
 app.use(express.json({ limit: '10mb' }));
 
+// ── SEO & SECURITY ───────────────────────────────────────────────────────────
+
+// Security headers on every response
+app.use((req, res, next) => {
+  res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload');
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'DENY');
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+  res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
+  next();
+});
+
+// robots.txt
+app.get('/robots.txt', (req, res) => {
+  res.type('text/plain');
+  res.send(`User-agent: *
+Allow: /
+Disallow: /app
+Disallow: /auth.html
+Disallow: /api/
+
+Sitemap: https://resumeai.today/sitemap.xml`);
+});
+
+// sitemap.xml
+app.get('/sitemap.xml', (req, res) => {
+  res.type('application/xml');
+  res.send(`<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://resumeai.today/</loc>
+    <changefreq>weekly</changefreq>
+    <priority>1.0</priority>
+  </url>
+</urlset>`);
+});
+
 // Routes BEFORE static
 app.get('/', (req, res) => res.sendFile(__dirname + '/public/landing.html'));
 app.get('/app', (req, res) => res.sendFile(__dirname + '/public/index.html'));
 
 app.use(express.static('public'));
+
+// 404 handler
+app.use((req, res) => {
+  if (req.path.startsWith('/api') || req.path.startsWith('/optimize') || req.path.startsWith('/targeted') || req.path.startsWith('/download') || req.path.startsWith('/create-checkout') || req.path.startsWith('/check-subscription') || req.path.startsWith('/webhook') || req.path.startsWith('/analyze-template')) {
+    return res.status(404).json({ error: 'Not found' });
+  }
+  res.status(404).sendFile(__dirname + '/public/landing.html');
+});
 
 // ── SYSTEMS ──────────────────────────────────────────────────────────────────
 
@@ -139,7 +201,7 @@ ${resume}
 
 // ── OPTIMISE ─────────────────────────────────────────────────────────────────
 
-app.post('/optimize', async (req, res) => {
+app.post('/optimize', rateLimit(20, 60000), async (req, res) => {
   const { resume, jobDescription, userType, templateStyle } = req.body;
   if (!resume || !jobDescription) return res.status(400).json({ error: 'Missing fields' });
   try {
@@ -157,7 +219,7 @@ app.post('/optimize', async (req, res) => {
 
 // ── TARGETED ─────────────────────────────────────────────────────────────────
 
-app.post('/targeted', async (req, res) => {
+app.post('/targeted', rateLimit(10, 60000), async (req, res) => {
   const { resume, target } = req.body;
   if (!resume || !target) return res.status(400).json({ error: 'Missing fields' });
 
