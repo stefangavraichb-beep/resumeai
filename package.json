@@ -1,0 +1,33 @@
+{
+  "name": "resumeai",
+  "version": "1.0.0",
+  "description": "AI resume optimizer with ATS scoring, tailored CVs, cover letters, and interview preparation.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js",
+    "check": "node -c server.js && node -c generate_docx.js"
+  },
+  "keywords": [
+    "resume",
+    "cv",
+    "ats",
+    "ai",
+    "cover-letter"
+  ],
+  "author": "ResumeAI",
+  "license": "UNLICENSED",
+  "type": "commonjs",
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.100.1",
+    "cors": "^2.8.6",
+    "docx": "^8.5.0",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "multer": "^2.0.2",
+    "stripe": "^14.0.0"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
