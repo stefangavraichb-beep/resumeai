@@ -963,6 +963,24 @@
       </div>
 
       <div id="targetResults" style="display:none;margin-top:24px;">
+
+        <!-- ATS Score bar for targeted -->
+        <div id="tScoreBar" style="display:none;padding:14px 16px;border:1.5px solid var(--border);border-radius:12px;background:var(--surface);margin-bottom:12px;display:none;align-items:center;gap:16px;flex-wrap:wrap;">
+          <div style="position:relative;width:56px;height:56px;flex-shrink:0;">
+            <svg width="56" height="56" viewBox="0 0 84 84" style="overflow:visible;transform:rotate(-90deg);">
+              <circle fill="none" stroke-width="5" stroke="var(--border2)" cx="42" cy="42" r="36"/>
+              <circle fill="none" stroke-width="5" stroke-linecap="round" id="tScoreFill" cx="42" cy="42" r="36" stroke-dasharray="226.2" stroke-dashoffset="226.2"/>
+            </svg>
+            <div id="tScoreNum" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:'Instrument Serif',serif;font-size:13px;font-weight:400;">—</div>
+          </div>
+          <div style="flex:1;min-width:0;">
+            <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:2px;">ATS Score</div>
+            <div style="font-size:12px;color:var(--text2);" id="tScoreExplain">Calculating...</div>
+          </div>
+          <div id="tScoreLoading" style="font-size:12px;color:var(--muted);display:flex;align-items:center;gap:6px;">
+            <div class="spinner" style="width:16px;height:16px;border-width:2px;"></div> Scoring your CV...
+          </div>
+        </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">
           <div style="background:var(--blue-bg);border:1.5px solid var(--blue-bd);border-radius:12px;padding:16px;">
             <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--blue);margin-bottom:8px;">🔍 Research Found</div>
@@ -1753,6 +1771,9 @@
     document.getElementById('targetResults').style.display = 'block';
     document.getElementById('targetResults').scrollIntoView({ behavior: 'smooth' });
 
+    // Fetch real ATS score
+    fetchTargetedATS(cv, research);
+
     // Save to localStorage so results persist across tab switches
     try {
       localStorage.setItem('targeted_last', JSON.stringify({
@@ -1999,6 +2020,39 @@
     } catch(err) {
       if (btn) { btn.textContent = origText; btn.disabled = false; }
       alert('Something went wrong: ' + err.message);
+    }
+  }
+
+  async function fetchTargetedATS(cvText, research) {
+    if (!cvText) return;
+    const bar = document.getElementById('tScoreBar');
+    const loadingEl = document.getElementById('tScoreLoading');
+    bar.style.display = 'flex';
+    loadingEl.style.display = 'flex';
+    document.getElementById('tScoreNum').textContent = '—';
+    document.getElementById('tScoreExplain').textContent = 'Calculating...';
+
+    try {
+      const res = await fetch('/score-targeted', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ cvText, research })
+      });
+      const data = await res.json();
+      if (data.score) {
+        const score = parseInt(data.score);
+        const circumference = 226.2;
+        const fill = document.getElementById('tScoreFill');
+        const color = score >= 70 ? 'var(--green)' : score >= 40 ? '#d97706' : 'var(--red)';
+        fill.style.stroke = color;
+        fill.style.strokeDashoffset = circumference;
+        setTimeout(() => { fill.style.strokeDashoffset = circumference - (score / 100) * circumference; }, 100);
+        document.getElementById('tScoreNum').textContent = score + '%';
+        document.getElementById('tScoreExplain').textContent = data.explain || '';
+        loadingEl.style.display = 'none';
+      }
+    } catch(e) {
+      bar.style.display = 'none';
     }
   }
 
