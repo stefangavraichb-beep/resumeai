@@ -1231,6 +1231,24 @@
     updateUsageDisplay();
     renderHistory();
     showLanding();
+
+    // Restore targeted results if they exist
+    try {
+      const savedTargeted = localStorage.getItem('targeted_last');
+      if (savedTargeted) {
+        const t = JSON.parse(savedTargeted);
+        if (t.cv || t.research) {
+          document.getElementById('tResearch').textContent = t.research || '';
+          document.getElementById('tStrategy').textContent = t.strategy || '';
+          window._targetedCVRaw = t.cv || '';
+          renderTargetedCV(t.cv || '');
+          document.getElementById('tCover').textContent = t.cover || '';
+          document.getElementById('tInterviewPrep').textContent = t.prep || '';
+          document.getElementById('targetResults').style.display = 'block';
+          if (t.input) document.getElementById('targetInput').value = t.input;
+        }
+      }
+    } catch(e) {}
   }
 
   function getEffectiveLimit() {
@@ -1734,6 +1752,18 @@
 
     document.getElementById('targetResults').style.display = 'block';
     document.getElementById('targetResults').scrollIntoView({ behavior: 'smooth' });
+
+    // Save to localStorage so results persist across tab switches
+    try {
+      localStorage.setItem('targeted_last', JSON.stringify({
+        input: document.getElementById('targetInput').value,
+        research: document.getElementById('tResearch').textContent,
+        strategy: document.getElementById('tStrategy').textContent,
+        cv: window._targetedCVRaw || '',
+        cover: document.getElementById('tCover').textContent,
+        prep: document.getElementById('tInterviewPrep').textContent
+      }));
+    } catch(e) {}
   }
 
   // ─── TABS ───
