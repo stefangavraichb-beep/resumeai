@@ -33,9 +33,7 @@ app.use(cors());
 app.use('/webhook', express.raw({ type: 'application/json' }));
 app.use(express.json({ limit: '10mb' }));
 
-// ── SEO & SECURITY ───────────────────────────────────────────────────────────
-
-// Security headers on every response
+// ── SECURITY HEADERS ─────────────────────────────────────────────────────────
 app.use((req, res, next) => {
   res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload');
   res.setHeader('X-Content-Type-Options', 'nosniff');
@@ -45,7 +43,15 @@ app.use((req, res, next) => {
   next();
 });
 
-// robots.txt
+// ── WWW REDIRECT ─────────────────────────────────────────────────────────────
+app.use((req, res, next) => {
+  if (req.headers.host === 'www.resumeai.today') {
+    return res.redirect(301, 'https://resumeai.today' + req.url);
+  }
+  next();
+});
+
+// ── SEO ───────────────────────────────────────────────────────────────────────
 app.get('/robots.txt', (req, res) => {
   res.type('text/plain');
   res.send(`User-agent: *
@@ -57,7 +63,6 @@ Disallow: /api/
 Sitemap: https://resumeai.today/sitemap.xml`);
 });
 
-// sitemap.xml
 app.get('/sitemap.xml', (req, res) => {
   res.type('application/xml');
   res.send(`<?xml version="1.0" encoding="UTF-8"?>
@@ -70,22 +75,22 @@ app.get('/sitemap.xml', (req, res) => {
 </urlset>`);
 });
 
-// Routes BEFORE static
+// ── ROUTES ────────────────────────────────────────────────────────────────────
 app.get('/', (req, res) => res.sendFile(__dirname + '/public/landing.html'));
 app.get('/app', (req, res) => res.sendFile(__dirname + '/public/index.html'));
 
 app.use(express.static('public'));
 
-// 404 handler
-app.use((req, res) => {
-  if (req.path.startsWith('/api') || req.path.startsWith('/optimize') || req.path.startsWith('/targeted') || req.path.startsWith('/download') || req.path.startsWith('/create-checkout') || req.path.startsWith('/check-subscription') || req.path.startsWith('/webhook') || req.path.startsWith('/analyze-template')) {
+// ── 404 ───────────────────────────────────────────────────────────────────────
+app.use((req, res, next) => {
+  const apiPaths = ['/api', '/optimize', '/targeted', '/download', '/create-checkout', '/check-subscription', '/webhook', '/analyze-template', '/capture-email'];
+  if (apiPaths.some(p => req.path.startsWith(p))) {
     return res.status(404).json({ error: 'Not found' });
   }
   res.status(404).sendFile(__dirname + '/public/landing.html');
 });
 
-// ── SYSTEMS ──────────────────────────────────────────────────────────────────
-
+// ── PROMPTS ───────────────────────────────────────────────────────────────────
 const CV_FORMAT = `
 CRITICAL: Output the CV as plain text using this EXACT structure. Use 3+ spaces to separate entry names from dates.
 
@@ -199,8 +204,7 @@ USER'S RESUME:
 ${resume}
 `;
 
-// ── OPTIMISE ─────────────────────────────────────────────────────────────────
-
+// ── OPTIMISE ──────────────────────────────────────────────────────────────────
 app.post('/optimize', rateLimit(20, 60000), async (req, res) => {
   const { resume, jobDescription, userType, templateStyle } = req.body;
   if (!resume || !jobDescription) return res.status(400).json({ error: 'Missing fields' });
@@ -217,14 +221,12 @@ app.post('/optimize', rateLimit(20, 60000), async (req, res) => {
   }
 });
 
-// ── TARGETED ─────────────────────────────────────────────────────────────────
-
+// ── TARGETED ──────────────────────────────────────────────────────────────────
 app.post('/targeted', rateLimit(10, 60000), async (req, res) => {
   const { resume, target } = req.body;
   if (!resume || !target) return res.status(400).json({ error: 'Missing fields' });
 
   try {
-    // Full agentic loop for web search
     const messages = [{ role: 'user', content: buildTargetedPrompt(resume, target) }];
 
     let response = await client.messages.create({
@@ -235,7 +237,6 @@ app.post('/targeted', rateLimit(10, 60000), async (req, res) => {
       messages
     });
 
-    // Handle tool_use loops (max 8 iterations)
     let iter = 0;
     while (response.stop_reason === 'tool_use' && iter < 8) {
       iter++;
@@ -257,7 +258,6 @@ app.post('/targeted', rateLimit(10, 60000), async (req, res) => {
       });
     }
 
-    // ONLY take text from the FINAL response - never from intermediate messages
     let fullText = response.content
       .filter(b => b.type === 'text')
       .map(b => b.text)
@@ -265,22 +265,15 @@ app.post('/targeted', rateLimit(10, 60000), async (req, res) => {
       .trim();
 
     console.log(`Targeted done. Iterations: ${iter}, Text: ${fullText.length} chars`);
-    console.log('First 200 chars:', fullText.substring(0, 200));
 
-    // Fallback if no content
     if (fullText.length < 200) {
-      console.log('Falling back to knowledge-based (no web search)');
       const fallback = await client.messages.create({
         model: 'claude-sonnet-4-6',
         max_tokens: 8000,
         system: TARGETED_SYSTEM,
         messages: [{ role: 'user', content: buildTargetedPrompt(resume, target) }]
       });
-      fullText = fallback.content
-        .filter(b => b.type === 'text')
-        .map(b => b.text)
-        .join('\n')
-        .trim();
+      fullText = fallback.content.filter(b => b.type === 'text').map(b => b.text).join('\n').trim();
     }
 
     if (!fullText.trim()) return res.status(500).json({ error: 'No content generated. Please try again.' });
@@ -288,7 +281,6 @@ app.post('/targeted', rateLimit(10, 60000), async (req, res) => {
 
   } catch (e) {
     console.error('Targeted error:', e.message);
-    // Final fallback without tools
     try {
       const fb = await client.messages.create({
         model: 'claude-sonnet-4-6',
@@ -304,8 +296,7 @@ app.post('/targeted', rateLimit(10, 60000), async (req, res) => {
   }
 });
 
-// ── DOCX DOWNLOADS ───────────────────────────────────────────────────────────
-
+// ── DOCX DOWNLOADS ────────────────────────────────────────────────────────────
 app.post('/download-cv', async (req, res) => {
   const { resumeText } = req.body;
   if (!resumeText) return res.status(400).json({ error: 'Missing resume text' });
@@ -328,8 +319,7 @@ app.post('/download-cover', async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// ── TEMPLATE ANALYSER ────────────────────────────────────────────────────────
-
+// ── TEMPLATE ANALYSER ─────────────────────────────────────────────────────────
 app.post('/analyze-template', upload.single('template'), async (req, res) => {
   if (!req.file) return res.status(400).json({ error: 'No file' });
   try {
@@ -343,8 +333,26 @@ app.post('/analyze-template', upload.single('template'), async (req, res) => {
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
-// ── STRIPE ───────────────────────────────────────────────────────────────────
+// ── EMAIL CAPTURE ─────────────────────────────────────────────────────────────
+app.post('/capture-email', async (req, res) => {
+  const { email, userId } = req.body;
+  if (!email) return res.status(400).json({ error: 'Missing email' });
 
+  const timestamp = new Date().toISOString();
+  const line = `${timestamp} | ${email} | userId:${userId || 'unknown'}\n`;
+
+  // Save to file
+  try {
+    fs.appendFileSync('captured_emails.txt', line);
+  } catch (e) {
+    console.error('Could not write email to file:', e.message);
+  }
+
+  console.log(`Email captured: ${email}`);
+  res.json({ ok: true });
+});
+
+// ── STRIPE ────────────────────────────────────────────────────────────────────
 app.post('/create-checkout', async (req, res) => {
   const { userId, userEmail } = req.body;
   if (!userId || !userEmail) return res.status(400).json({ error: 'Missing user info' });
@@ -381,7 +389,6 @@ app.post('/webhook', async (req, res) => {
   res.json({ received: true });
 });
 
-// ── START ─────────────────────────────────────────────────────────────────────
-
+// ── START ──────────────────────────────────────────────────────────────────────
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`ResumeAI running on port ${PORT}`));
