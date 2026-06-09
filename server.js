@@ -5,7 +5,6 @@ const multer = require('multer');
 const fs = require('fs');
 const Stripe = require('stripe');
 const { buildFromElements, parseCoverLetterToDocx } = require('./generate_docx');
-const { generatePDFFromHTML } = require('./generate_pdf');
 
 require('dotenv').config();
 
@@ -211,17 +210,6 @@ app.post('/targeted', rateLimit(10, 60000), async (req, res) => {
       res.json({ result: fb.content.filter(b => b.type === 'text').map(b => b.text).join('\n').trim() });
     } catch (e2) { res.status(500).json({ error: e.message }); }
   }
-});
-
-app.post('/download-pdf', async (req, res) => {
-  const { htmlContent } = req.body;
-  if (!htmlContent) return res.status(400).json({ error: 'Missing HTML content' });
-  try {
-    const pdf = await generatePDFFromHTML(htmlContent);
-    res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', 'attachment; filename="optimised-cv.pdf"');
-    res.send(pdf);
-  } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
 app.post('/download-cv', async (req, res) => {
