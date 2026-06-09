@@ -1916,10 +1916,47 @@
   }
 
   async function downloadTargetedCV() {
-    const text = document.getElementById('tCV').textContent;
-    if (!text.trim()) return;
+    const container = document.getElementById('tCV');
+    if (!container || !container.innerText.trim()) return;
+
+    // Extract elements same way as main CV download
+    const elements = [];
+    const nodes = container.children;
+    for (let i = 0; i < nodes.length; i++) {
+      const node = nodes[i];
+      const text = (node.innerText || node.textContent || '').trim();
+      const style = node.getAttribute('style') || '';
+
+      if (!text) { elements.push({ type: 'gap' }); continue; }
+
+      // Detect by style/content
+      if (style.includes('font-weight:700') && style.includes('font-size:17px')) {
+        elements.push({ type: 'name', text });
+      } else if (style.includes('text-align:center') && style.includes('color:#6b7280')) {
+        elements.push({ type: 'contact', text });
+      } else if (style.includes('border-bottom') && style.includes('text-transform:uppercase')) {
+        elements.push({ type: 'section', text });
+      } else if (style.includes('justify-content:space-between') && style.includes('font-weight:600')) {
+        const spans = node.querySelectorAll('span');
+        const left = spans[0] ? spans[0].innerText.trim() : text;
+        const right = spans[1] ? spans[1].innerText.trim() : '';
+        elements.push({ type: 'entry', left, right });
+      } else if (style.includes('padding-left:14px')) {
+        elements.push({ type: 'bullet', text: text.replace(/^-\s*/, '') });
+      } else if (node.querySelector('strong')) {
+        const strong = node.querySelector('strong');
+        const label = strong.innerText.replace(':', '').trim();
+        const value = text.replace(strong.innerText, '').trim();
+        elements.push({ type: 'skills', label, value });
+      } else if (style.includes('height:8px')) {
+        elements.push({ type: 'gap' });
+      } else {
+        elements.push({ type: 'body', text });
+      }
+    }
+
     try {
-      const res = await fetch('/download-cv', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ resumeText: text }) });
+      const res = await fetch('/download-cv', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ elements }) });
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a'); a.href = url; a.download = 'targeted-cv.docx'; a.click();
