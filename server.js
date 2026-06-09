@@ -4,7 +4,9 @@ const cors = require('cors');
 const multer = require('multer');
 const fs = require('fs');
 const Stripe = require('stripe');
-const { parseResumeToDocx, parseCoverLetterToDocx } = require('./generate_docx');
+const { buildFromElements, parseCoverLetterToDocx } = require('./generate_docx');
+const { generatePDFFromHTML } = require('./generate_pdf');
+
 require('dotenv').config();
 
 const rateLimits = new Map();
@@ -211,20 +213,22 @@ app.post('/targeted', rateLimit(10, 60000), async (req, res) => {
   }
 });
 
-app.post('/download-cv', async (req, res) => {
-  const { resumeText } = req.body;
-  if (!resumeText) return res.status(400).json({ error: 'Missing resume text' });
+app.post('/download-pdf', async (req, res) => {
+  const { htmlContent } = req.body;
+  if (!htmlContent) return res.status(400).json({ error: 'Missing HTML content' });
   try {
-    // Clean text before passing to docx generator
-    const cleaned = resumeText
-      .replace(/```[\w]*\n?/g, '')
-      .replace(/```/g, '')
-      .replace(/\*\*/g, '')
-      .replace(/\*/g, '')
-      .replace(/^#{1,4}\s*/gm, '')
-      .replace(/^---+$/gm, '')
-      .trim();
-    const buf = await parseResumeToDocx(cleaned);
+    const pdf = await generatePDFFromHTML(htmlContent);
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', 'attachment; filename="optimised-cv.pdf"');
+    res.send(pdf);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/download-cv', async (req, res) => {
+  const { elements } = req.body;
+  if (!elements || !elements.length) return res.status(400).json({ error: 'Missing elements' });
+  try {
+    const buf = await buildFromElements(elements);
     res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
     res.setHeader('Content-Disposition', 'attachment; filename="optimised-cv.docx"');
     res.send(buf);
