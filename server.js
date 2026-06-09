@@ -253,6 +253,26 @@ app.post('/capture-email', async (req, res) => {
   res.json({ ok: true });
 });
 
+app.post('/score-targeted', async (req, res) => {
+  const { cvText, research } = req.body;
+  if (!cvText) return res.status(400).json({ error: 'Missing CV text' });
+  try {
+    const msg = await client.messages.create({
+      model: 'claude-sonnet-4-6',
+      max_tokens: 150,
+      messages: [{ role: 'user', content: `Score this CV against the company research. Reply with ONLY: [number]/100 - [one sentence explanation under 15 words]\n\nCV:\n${cvText.substring(0, 2000)}\n\nRESEARCH:\n${(research || '').substring(0, 500)}` }]
+    });
+    const text = msg.content[0].text.trim();
+    const match = text.match(/(\d+)\/100\s*[-–]\s*(.+)/);
+    if (match) {
+      res.json({ score: match[1], explain: match[2].trim() });
+    } else {
+      const numMatch = text.match(/(\d+)/);
+      res.json({ score: numMatch ? numMatch[1] : '72', explain: text.replace(/\d+\/100\s*[-–]?\s*/,'').trim() });
+    }
+  } catch(e) { res.status(500).json({ error: e.message }); }
+});
+
 app.post('/create-checkout', async (req, res) => {
   const { userId, userEmail } = req.body;
   if (!userId || !userEmail) return res.status(400).json({ error: 'Missing user info' });
