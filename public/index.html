@@ -1850,18 +1850,67 @@
 
   // ─── DOWNLOAD ───
   async function downloadDoc(type) {
-    const text = type === 'cv'
-      ? (window._rawCVText || document.getElementById('optimizedResume').innerText)
-      : (window._rawCoverText || document.getElementById('coverLetter').innerText);
+    if (type === 'cv') {
+      // Extract structured elements directly from the rendered preview
+      const container = document.getElementById('optimizedResume');
+      if (!container) return;
+      const elements = [];
+      const nodes = container.children;
+      for (let i = 0; i < nodes.length; i++) {
+        const node = nodes[i];
+        const cls = node.className;
+        const text = node.innerText || node.textContent || '';
+        if (!text.trim() && cls !== 'cv-gap') continue;
+
+        if (cls === 'cv-name') {
+          elements.push({ type: 'name', text: text.trim() });
+        } else if (cls === 'cv-contact') {
+          elements.push({ type: 'contact', text: text.trim() });
+        } else if (cls === 'cv-section') {
+          elements.push({ type: 'section', text: text.trim() });
+        } else if (cls === 'cv-entry') {
+          const spans = node.querySelectorAll('span');
+          const left = spans[0] ? spans[0].innerText.trim() : text.trim();
+          const right = spans[1] ? spans[1].innerText.trim() : '';
+          elements.push({ type: 'entry', left, right });
+        } else if (cls === 'cv-bullet') {
+          elements.push({ type: 'bullet', text: text.trim() });
+        } else if (cls === 'cv-skills') {
+          const strong = node.querySelector('strong');
+          const label = strong ? strong.innerText.replace(':', '').trim() : '';
+          const value = text.replace(strong ? strong.innerText : '', '').trim();
+          elements.push({ type: 'skills', label, value });
+        } else if (cls === 'cv-sub') {
+          elements.push({ type: 'sub', text: text.trim() });
+        } else if (cls === 'cv-gap') {
+          elements.push({ type: 'gap' });
+        } else {
+          elements.push({ type: 'body', text: text.trim() });
+        }
+      }
+      try {
+        const res = await fetch('/download-cv', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ elements })
+        });
+        const blob = await res.blob();
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url; a.download = 'optimised-cv.docx'; a.click();
+        URL.revokeObjectURL(url);
+      } catch(err) { alert('Download failed: ' + err.message); }
+      return;
+    }
+    // Cover letter
+    const text = window._rawCoverText || document.getElementById('coverLetter').innerText;
     if (!text) return;
-    const endpoint = type === 'cv' ? '/download-cv' : '/download-cover';
-    const body = type === 'cv' ? { resumeText: text } : { coverText: text };
     try {
-      const res = await fetch(endpoint, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) });
+      const res = await fetch('/download-cover', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ coverText: text }) });
       const blob = await res.blob();
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
-      a.href = url; a.download = type === 'cv' ? 'optimized-cv.docx' : 'cover-letter.docx'; a.click();
+      a.href = url; a.download = 'cover-letter.docx'; a.click();
       URL.revokeObjectURL(url);
     } catch(err) { alert('Download failed: ' + err.message); }
   }
