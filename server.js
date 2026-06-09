@@ -25,26 +25,11 @@ function rateLimit(maxReqs, windowMs) {
 }
 
 const app = express();
-const upload = multer({
-  dest: 'uploads/',
-  limits: { fileSize: 2 * 1024 * 1024 },
-  fileFilter: (req, file, cb) => {
-    const allowed = [
-      'text/plain',
-      'application/pdf',
-      'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-    ];
-    if (!allowed.includes(file.mimetype)) {
-      return cb(new Error('Only PDF, DOCX, and TXT files are allowed.'));
-    }
-    cb(null, true);
-  }
-});
+const upload = multer({ dest: 'uploads/' });
 const stripe = Stripe(process.env.STRIPE_SECRET_KEY);
 const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
-app.set('trust proxy', 1);
-app.use(cors({ origin: true, credentials: false }));
+app.use(cors());
 app.use('/webhook', express.raw({ type: 'application/json' }));
 app.use(express.json({ limit: '10mb' }));
 
@@ -57,22 +42,19 @@ app.use((req, res, next) => {
   res.setHeader('X-Frame-Options', 'DENY');
   res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
   res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
-  res.setHeader('Content-Security-Policy', "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://*.supabase.co https://api.stripe.com; img-src 'self' data: https:; frame-src https://js.stripe.com https://hooks.stripe.com; object-src 'none'; base-uri 'self'; frame-ancestors 'none';");
   next();
 });
 
 // robots.txt
 app.get('/robots.txt', (req, res) => {
   res.type('text/plain');
-  res.send([
-    'User-agent: *',
-    'Allow: /',
-    'Disallow: /app',
-    'Disallow: /auth.html',
-    'Disallow: /api/',
-    '',
-    'Sitemap: https://resumeai.today/sitemap.xml'
-  ].join('\n'));
+  res.send(`User-agent: *
+Allow: /
+Disallow: /app
+Disallow: /auth.html
+Disallow: /api/
+
+Sitemap: https://resumeai.today/sitemap.xml`);
 });
 
 // sitemap.xml
@@ -85,17 +67,7 @@ app.get('/sitemap.xml', (req, res) => {
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>
-  <url>
-    <loc>https://resumeai.today/auth.html</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.4</priority>
-  </url>
 </urlset>`);
-});
-
-// Health check for uptime monitors and deployment checks
-app.get('/health', (req, res) => {
-  res.json({ ok: true, service: 'resumeai' });
 });
 
 // Routes BEFORE static
@@ -103,6 +75,14 @@ app.get('/', (req, res) => res.sendFile(__dirname + '/public/landing.html'));
 app.get('/app', (req, res) => res.sendFile(__dirname + '/public/index.html'));
 
 app.use(express.static('public'));
+
+// 404 handler
+app.use((req, res) => {
+  if (req.path.startsWith('/api') || req.path.startsWith('/optimize') || req.path.startsWith('/targeted') || req.path.startsWith('/download') || req.path.startsWith('/create-checkout') || req.path.startsWith('/check-subscription') || req.path.startsWith('/webhook') || req.path.startsWith('/analyze-template')) {
+    return res.status(404).json({ error: 'Not found' });
+  }
+  res.status(404).sendFile(__dirname + '/public/landing.html');
+});
 
 // ── SYSTEMS ──────────────────────────────────────────────────────────────────
 
@@ -233,7 +213,7 @@ app.post('/optimize', rateLimit(20, 60000), async (req, res) => {
     });
     res.json({ result: msg.content[0].text });
   } catch (e) {
-    console.error(e); res.status(500).json({ error: 'Something went wrong while processing your request. Please try again.' });
+    res.status(500).json({ error: e.message });
   }
 });
 
@@ -319,7 +299,7 @@ app.post('/targeted', rateLimit(10, 60000), async (req, res) => {
       const text = fb.content.filter(b => b.type === 'text').map(b => b.text).join('\n');
       res.json({ result: text.trim() });
     } catch (e2) {
-      console.error(e); res.status(500).json({ error: 'Something went wrong while processing your request. Please try again.' });
+      res.status(500).json({ error: e.message });
     }
   }
 });
@@ -334,7 +314,7 @@ app.post('/download-cv', async (req, res) => {
     res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
     res.setHeader('Content-Disposition', 'attachment; filename="optimised-cv.docx"');
     res.send(buf);
-  } catch (e) { console.error(e); res.status(500).json({ error: 'Something went wrong while processing your request. Please try again.' }); }
+  } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
 app.post('/download-cover', async (req, res) => {
@@ -345,13 +325,13 @@ app.post('/download-cover', async (req, res) => {
     res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
     res.setHeader('Content-Disposition', 'attachment; filename="cover-letter.docx"');
     res.send(buf);
-  } catch (e) { console.error(e); res.status(500).json({ error: 'Something went wrong while processing your request. Please try again.' }); }
+  } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
 // ── TEMPLATE ANALYSER ────────────────────────────────────────────────────────
 
 app.post('/analyze-template', upload.single('template'), async (req, res) => {
-  if (!req.file) return res.status(400).json({ error: 'No file uploaded. Please choose a TXT or DOCX template under 2 MB.' });
+  if (!req.file) return res.status(400).json({ error: 'No file' });
   try {
     const txt = fs.readFileSync(req.file.path, 'utf8');
     fs.unlinkSync(req.file.path);
@@ -360,7 +340,7 @@ app.post('/analyze-template', upload.single('template'), async (req, res) => {
       messages: [{ role: 'user', content: `Describe this CV template style in 2 sentences:\n${txt}` }]
     });
     res.json({ style: msg.content[0].text });
-  } catch (e) { console.error(e); res.status(500).json({ error: 'Something went wrong while processing your request. Please try again.' }); }
+  } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
 // ── STRIPE ───────────────────────────────────────────────────────────────────
@@ -379,7 +359,7 @@ app.post('/create-checkout', async (req, res) => {
       cancel_url: `${process.env.APP_URL}/app?upgrade=cancelled`,
     });
     res.json({ url: session.url });
-  } catch (e) { console.error(e); res.status(500).json({ error: 'Something went wrong while processing your request. Please try again.' }); }
+  } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
 app.post('/check-subscription', async (req, res) => {
@@ -399,14 +379,6 @@ app.post('/webhook', async (req, res) => {
     stripe.webhooks.constructEvent(req.body, sig, process.env.STRIPE_WEBHOOK_SECRET);
   } catch (e) { return res.status(400).send(`Webhook Error: ${e.message}`); }
   res.json({ received: true });
-});
-
-// 404 handler - keep this after every route above
-app.use((req, res) => {
-  if (req.path.startsWith('/api') || req.path.startsWith('/optimize') || req.path.startsWith('/targeted') || req.path.startsWith('/download') || req.path.startsWith('/create-checkout') || req.path.startsWith('/check-subscription') || req.path.startsWith('/webhook') || req.path.startsWith('/analyze-template')) {
-    return res.status(404).json({ error: 'Not found' });
-  }
-  res.status(404).sendFile(__dirname + '/public/landing.html');
 });
 
 // ── START ─────────────────────────────────────────────────────────────────────
