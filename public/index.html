@@ -1163,7 +1163,7 @@
   });
 
   sb.auth.onAuthStateChange((event, session) => {
-    if (event === 'SIGNED_IN' && session) {
+    if (event === 'SIGNED_IN' && session && !currentUser) {
       currentUser = session.user;
       initUser();
     }
