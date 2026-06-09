@@ -296,7 +296,7 @@ app.post('/check-subscription', async (req, res) => {
   if (!userEmail) return res.json({ isPro: false });
 
   // Admin — always Pro
-  const adminEmails = ['stefan.gavra.ichb@gmail.com'];
+  const adminEmails = ['stefan.gavra.ichb@gmail.com','mcocseraph@gmail.com'];
   if (adminEmails.includes(userEmail.toLowerCase())) {
     return res.json({ isPro: true });
   }
