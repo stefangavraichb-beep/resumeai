@@ -1580,7 +1580,9 @@
 
     document.getElementById('keywordsWrap').innerHTML = keywords.split(',').map(k=>k.trim()).filter(Boolean).map(k=>`<span class="kw-tag">${k}</span>`).join('');
     renderCVPreview(optimized);
+    window._rawCVText = optimized; // save raw for download
     document.getElementById('coverLetter').innerHTML = cover.split('\n').map(l => l.trim() ? `<p style='margin-bottom:8px'>${l.trim()}</p>` : '<br/>').join('');
+    window._rawCoverText = cover; // save raw for download
 
     const tipsArr = tips.split('\n').filter(t=>t.trim());
     document.getElementById('tipsList').innerHTML = tipsArr.map(t=>`<li class="tip-item"><span class="tip-arrow">→</span>${t.replace(/^[-•*\d.]\s*/,'')}</li>`).join('');
@@ -1849,8 +1851,8 @@
   // ─── DOWNLOAD ───
   async function downloadDoc(type) {
     const text = type === 'cv'
-      ? document.getElementById('optimizedResume').textContent
-      : document.getElementById('coverLetter').textContent;
+      ? (window._rawCVText || document.getElementById('optimizedResume').innerText)
+      : (window._rawCoverText || document.getElementById('coverLetter').innerText);
     if (!text) return;
     const endpoint = type === 'cv' ? '/download-cv' : '/download-cover';
     const body = type === 'cv' ? { resumeText: text } : { coverText: text };
