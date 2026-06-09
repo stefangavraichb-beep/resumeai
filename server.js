@@ -215,7 +215,16 @@ app.post('/download-cv', async (req, res) => {
   const { resumeText } = req.body;
   if (!resumeText) return res.status(400).json({ error: 'Missing resume text' });
   try {
-    const buf = await parseResumeToDocx(resumeText);
+    // Clean text before passing to docx generator
+    const cleaned = resumeText
+      .replace(/```[\w]*\n?/g, '')
+      .replace(/```/g, '')
+      .replace(/\*\*/g, '')
+      .replace(/\*/g, '')
+      .replace(/^#{1,4}\s*/gm, '')
+      .replace(/^---+$/gm, '')
+      .trim();
+    const buf = await parseResumeToDocx(cleaned);
     res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
     res.setHeader('Content-Disposition', 'attachment; filename="optimised-cv.docx"');
     res.send(buf);
