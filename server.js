@@ -273,6 +273,13 @@ app.post('/create-checkout', async (req, res) => {
 app.post('/check-subscription', async (req, res) => {
   const { userEmail } = req.body;
   if (!userEmail) return res.json({ isPro: false });
+
+  // Admin — always Pro
+  const adminEmails = ['stefan.gavra.ichb@gmail.com'];
+  if (adminEmails.includes(userEmail.toLowerCase())) {
+    return res.json({ isPro: true });
+  }
+
   try {
     const customers = await stripe.customers.list({ email: userEmail, limit: 1 });
     if (!customers.data.length) return res.json({ isPro: false });
